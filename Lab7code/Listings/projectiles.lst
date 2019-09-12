@@ -1,0 +1,3307 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000                 AREA             GPIO, CODE, READWRITE
+    2 00000000         
+    3 00000000         ;EXTERN amount_of_lives
+    4 00000000                 EXTERN           FIQ_Handler
+    5 00000000                 EXTERN           end_of_code
+    6 00000000                 EXTERN           rng
+    7 00000000                 EXTERN           update_map
+    8 00000000                 EXTERN           uart_init
+    9 00000000                 EXPORT           proj_setups
+   10 00000000                 EXPORT           eject_proj
+   11 00000000                 EXPORT           proj_motion
+   12 00000000                 EXTERN           newline
+   13 00000000                 EXTERN           lab7_restart
+   14 00000000                 EXTERN           enemy_proj_setups
+   15 00000000                 EXTERN           enemy_setups
+   16 00000000                 EXTERN           ship_setups
+   17 00000000                 EXTERN           mothership_setup
+   18 00000000                 EXTERN           output_string
+   19 00000000                 EXTERN           interrupt_init
+   20 00000000 40005000 
+                       lives   EQU              0x40005000
+   21 00000000 E000C004 
+                       UART0   EQU              0xE000C004
+   22 00000000 E0004004 
+                       T0TCR   EQU              0xE0004004
+   23 00000000 E0004014 
+                       T0MCR   EQU              0xE0004014
+   24 00000000 E0008004 
+                       T1TCR   EQU              0xE0008004
+   25 00000000 E0008014 
+                       T1MCR   EQU              0xE0008014
+   26 00000000 E0004008 
+                       T0TC    EQU              0xE0004008
+   27 00000000 40007544 
+                       number_of_loops
+                               EQU              0x40007544
+   28 00000000         
+   29 00000000 40006930 
+                       mothership_score_1
+                               EQU              0x40006930
+   30 00000000 40006934 
+                       mothership_score_10
+                               EQU              0x40006934
+   31 00000000 40006938 
+                       mothership_score_100
+                               EQU              0x40006938
+   32 00000000         
+   33 00000000         
+   34 00000000 400078A0 
+                       mothership_exist_on_board
+                               EQU              0x400078A0
+   35 00000000 40007100 
+                       promptoffset
+                               EQU              0x40007100
+   36 00000000 40007400 
+                       proj_offset
+                               EQU              0x40007400
+   37 00000000 40006000 
+                       ship_location
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+                               EQU              0x40006000
+   38 00000000 40007410 
+                       proj_exist_on_board_flag
+                               EQU              0x40007410
+   39 00000000 40007420 
+                       Ss_storing_address
+                               EQU              0x40007420
+   40 00000000 40007430 
+                       Ss2_storing_address
+                               EQU              0x40007430
+   41 00000000 40007440 
+                       selected_enemy_that_shoot_proj
+                               EQU              0x40007440
+   42 00000000 40007450 
+                       enemy_proj_offset
+                               EQU              0x40007450
+   43 00000000         ; 0 means not on board
+   44 00000000         ; 1 means on board
+   45 00000000 40006900 
+                       current_score_1
+                               EQU              0x40006900
+   46 00000000 40006904 
+                       current_score_10
+                               EQU              0x40006904
+   47 00000000 40006908 
+                       current_score_100
+                               EQU              0x40006908
+   48 00000000 4000690C 
+                       current_score_1000
+                               EQU              0x4000690C
+   49 00000000         
+   50 00000000 40006920 
+                       total_score_1
+                               EQU              0x40006920
+   51 00000000 40006924 
+                       total_score_10
+                               EQU              0x40006924
+   52 00000000 40006928 
+                       total_score_100
+                               EQU              0x40006928
+   53 00000000 4000692C 
+                       total_score_1000
+                               EQU              0x4000692C
+   54 00000000         
+   55 00000000 40006944 
+                       time_left_1
+                               EQU              0x40006944
+   56 00000000 40006948 
+                       time_left_10
+                               EQU              0x40006948
+   57 00000000 4000694C 
+                       time_left_100
+                               EQU              0x4000694C
+   58 00000000         
+   59 00000000 40006920 
+                       total_score
+                               EQU              0x40006920
+   60 00000000 40000200 
+                       current_level
+
+
+
+ARM Macro Assembler    Page 3 
+
+
+                               EQU              0x40000200
+   61 00000000 40006940 
+                       endpoint_location
+                               EQU              0x40006940
+   62 00000000         
+   63 00000000 40007120 
+                       enemyoffset
+                               EQU              0x40007120
+   64 00000000 40007130 
+                       enemy2offset
+                               EQU              0x40007130
+   65 00000000 40007140 
+                       enemy3offset
+                               EQU              0x40007140
+   66 00000000 40007150 
+                       enemy4offset
+                               EQU              0x40007150
+   67 00000000 40007160 
+                       enemy5offset
+                               EQU              0x40007160
+   68 00000000         
+   69 00000000 40007270 
+                       enemycounts
+                               EQU              0x40007270
+   70 00000000 40007280 
+                       enemy2counts
+                               EQU              0x40007280
+   71 00000000 40007290 
+                       enemy3counts
+                               EQU              0x40007290
+   72 00000000 400072A0 
+                       enemy4counts
+                               EQU              0x400072A0
+   73 00000000 400072B0 
+                       enemy5counts
+                               EQU              0x400072B0
+   74 00000000         
+   75 00000000 40007370 
+                       right_enemycounts
+                               EQU              0x40007370
+   76 00000000 40007380 
+                       right_enemy2counts
+                               EQU              0x40007380
+   77 00000000 40007390 
+                       right_enemy3counts
+                               EQU              0x40007390
+   78 00000000 400073A0 
+                       right_enemy4counts
+                               EQU              0x400073A0
+   79 00000000 400073B0 
+                       right_enemy5counts
+                               EQU              0x400073B0
+   80 00000000         
+   81 00000000 40007500 
+                       offset_hit_counts
+                               EQU              0x40007500
+   82 00000000 40007510 
+                       offset2_hit_counts
+                               EQU              0x40007510
+
+
+
+ARM Macro Assembler    Page 4 
+
+
+   83 00000000 40007520 
+                       offset3_hit_counts
+                               EQU              0x40007520
+   84 00000000 40007530 
+                       offset4_hit_counts
+                               EQU              0x40007530
+   85 00000000 40007540 
+                       offset5_hit_counts
+                               EQU              0x40007540
+   86 00000000         
+   87 00000000 40007990 
+                       keystork_rng_counter
+                               EQU              0x40007990
+   88 00000000 40007994 
+                       current_keyboard_rng_input
+                               EQU              0x40007994
+   89 00000000 40005010 
+                       paused_game_flag
+                               EQU              0x40005010
+   90 00000000 40007E20 
+                       prompt_storage_offset
+                               EQU              0x40007E20
+   91 00000000         
+   92 00000000 40007E28 
+                       mothership_appears_count
+                               EQU              0x40007E28
+   93 00000000 40007E2C 
+                       mothership_appears_hit
+                               EQU              0x40007E2C
+   94 00000000         
+   95 00000000         
+   96 00000000 0C 7C 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 4F 
+              4F 4F 4F 
+              4F 4F 4F 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+
+
+
+ARM Macro Assembler    Page 5 
+
+
+              4D 4D 4D 
+              4D 4D 4D 
+              4D 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 4D 4D 
+              4D 4D 4D 
+              4D 4D 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 57 
+              57 57 57 
+              57 57 57 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              57 57 57 
+              57 57 57 
+              57 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+
+
+
+ARM Macro Assembler    Page 6 
+
+
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 53 53 
+              53 20 20 
+              20 53 53 
+              53 20 20 
+              20 53 53 
+              53 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 53 
+              20 53 20 
+              20 20 53 
+              20 53 20 
+              20 20 53 
+              20 53 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              41 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              7C 00    prompt  =                12,"|---------------------|", 1
+0,13 ,  "|                     |", 10,13 , "|       OOOOOOO       |", 10,13 ,  
+"|       MMMMMMM       |", 10,13 ,  "|       MMMMMMM       |", 10,13 ,  "|     
+  WWWWWWW       |", 10,13 ,  "|       WWWWWWW       |", 10,13 ,  "|            
+         |", 10,13 ,  "|                     |", 10,13 ,  "|                   
+
+
+
+ARM Macro Assembler    Page 7 
+
+
+  |", 10,13 ,  "|                     |", 10,13 ,  "|   SSS   SSS   SSS   |", 1
+0,13 ,  "|   S S   S S   S S   |", 10,13 ,  "|                     |", 10,13 , 
+ "|                     |", 10,13 ,  "|          A          |", 10, 13 ,"|-----
+----------------|" ,0
+   97 000001A9 00 00 00        ALIGN
+   98 000001AC         
+   99 000001AC         proj_setups
+  100 000001AC E92D5FFF        STMFD            sp!, {r0-r12,lr}
+  101 000001B0 E59F0C18        LDR              r0, =proj_exist_on_board_flag
+  102 000001B4 E3A01000        MOV              r1, #0
+  103 000001B8 E5801000        STR              r1, [r0]
+  104 000001BC         
+  105 000001BC E59F0C10        LDR              r0, =Ss_storing_address
+  106 000001C0 E3A01000        MOV              r1, #0
+  107 000001C4 E5801000        STR              r1, [r0]
+  108 000001C8         
+  109 000001C8         
+  110 000001C8 E59F0C08        LDR              r0, =Ss2_storing_address
+  111 000001CC E3A01000        MOV              r1, #0
+  112 000001D0 E5801000        STR              r1, [r0]
+  113 000001D4         
+  114 000001D4 E59F0C00        LDR              r0, =selected_enemy_that_shoot_
+proj
+  115 000001D8 E3A01000        MOV              r1, #0
+  116 000001DC E5801000        STR              r1, [r0]
+  117 000001E0         
+  118 000001E0 E8BD5FFF        LDMFD            sp!, {r0-r12,lr}
+  119 000001E4 E12FFF1E        BX               lr
+  120 000001E8         
+  121 000001E8         
+  122 000001E8         
+  123 000001E8         eject_proj
+  124 000001E8 E92D5FFF        STMFD            sp!, {r0-r12,lr}
+  125 000001EC E59F0BEC        LDR              r0, =ship_location
+  126 000001F0 E5901000        LDR              r1, [r0]
+  127 000001F4 E2411019        SUB              r1, r1, #0x19
+  128 000001F8 E59F0BE4        LDR              r0, =proj_offset
+  129 000001FC E5801000        STR              r1, [r0]
+  130 00000200         
+  131 00000200 E59F0BDC        LDR              r0, =proj_offset
+  132 00000204 E5902000        LDR              r2, [r0]
+  133 00000208 E3A0105E        MOV              r1, #0x5E
+  134 0000020C E5C21000        STRB             r1, [r2]    ; projectile while 
+                                                            shows up at the fro
+                                                            nt of A
+  135 00000210         
+  136 00000210 E59F0BB8        LDR              r0, =proj_exist_on_board_flag
+  137 00000214 E3A01001        MOV              r1, #0x1
+  138 00000218 E5801000        STR              r1, [r0]
+  139 0000021C E8BD5FFF        LDMFD            sp!, {r0-r12,lr}
+  140 00000220 E12FFF1E        BX               lr
+  141 00000224         
+  142 00000224         proj_motion
+  143 00000224 E92D5FFF        STMFD            sp!, {r0-r12,lr}
+  144 00000228         
+  145 00000228 E59F0BB4        LDR              r0, =proj_offset
+  146 0000022C E5901000        LDR              r1, [r0]
+  147 00000230 E5D13000        LDRB             r3, [r1]
+  148 00000234 E353005E        CMP              r3, #0x5E
+
+
+
+ARM Macro Assembler    Page 8 
+
+
+  149 00000238 0A000005        BEQ              safe_skip
+  150 0000023C E3530020        CMP              r3, #0x20
+  151 00000240 0A000003        BEQ              safe_skip
+  152 00000244 E2811019        ADD              r1, r1, #0x19
+  153 00000248 E5801000        STR              r1, [r0]
+  154 0000024C EB00005F        BL               proj_hits_enemy
+  155 00000250         
+  156 00000250 EA00005C        B                done_end
+  157 00000254         safe_skip
+  158 00000254         
+  159 00000254 E5902000        LDR              r2, [r0]
+  160 00000258 E3A0305E        MOV              r3, #0x5E
+  161 0000025C E5C23000        STRB             r3, [r2]
+  162 00000260         
+  163 00000260 E5512019        LDRB             r2, [r1, #-0x19] ;  r2 contant 
+                                                            what is up from the
+                                                             proejctile
+  164 00000264         
+  165 00000264 E3520020        CMP              r2, #0x20
+  166 00000268 0A00000F        BEQ              its_space
+  167 0000026C         
+  168 0000026C E3520053        CMP              r2, #0x53   ;'S'
+  169 00000270 0A000016        BEQ              its_Ss
+  170 00000274         
+  171 00000274 E3520073        CMP              r2, #0x73   ;'s'
+  172 00000278 0A000014        BEQ              its_Ss
+  173 0000027C         
+  174 0000027C E352004F        CMP              r2, #0x4F   ;'O'
+  175 00000280 0A000021        BEQ              its_OMW
+  176 00000284 E352004D        CMP              r2, #0x4D   ;'M'
+  177 00000288 0A00001F        BEQ              its_OMW
+  178 0000028C E3520057        CMP              r2, #0x57   ;'W'
+  179 00000290 0A00001D        BEQ              its_OMW
+  180 00000294 E352002D        CMP              r2, #0x2D   ; '-'
+  181 00000298 0A00001D        BEQ              its_end
+  182 0000029C E3520076        CMP              r2, #0x76   ; 'v'
+  183 000002A0 0A000023        BEQ              its_enemy_proj
+  184 000002A4 E3520058        CMP              r2, #0x58
+  185 000002A8 0A000017        BEQ              its_OMW
+  186 000002AC         
+  187 000002AC         its_space
+  188 000002AC E59F0B30        LDR              r0, =proj_offset
+  189 000002B0 E5901000        LDR              r1, [r0]
+  190 000002B4 E2415019        SUB              r5, r1, #0x19
+  191 000002B8 E5805000        STR              r5, [r0]
+  192 000002BC E3A0305E        MOV              r3, #0x5E   ; r3 stores '^'
+  193 000002C0 E3A04020        MOV              r4, #0x20
+  194 000002C4 E5C14000        STRB             r4, [r1]
+  195 000002C8 E5413019        STRB             r3, [r1, #-0x19]
+  196 000002CC EA00003D        B                done_end    ; next_move
+  197 000002D0         its_Ss
+  198 000002D0 E3520053        CMP              r2, #0x53
+  199 000002D4 1A000002        BNE              its_s
+  200 000002D8 E3A0C073        MOV              r12, #0x73
+  201 000002DC E541C019        STRB             r12, [r1,#-0x19]
+  202 000002E0 EA000001        B                done_with_reduce
+  203 000002E4         its_s
+  204 000002E4 E3A0C020        MOV              r12, #0x20
+  205 000002E8 E541C019        STRB             r12, [r1,#-0x19]
+
+
+
+ARM Macro Assembler    Page 9 
+
+
+  206 000002EC         done_with_reduce
+  207 000002EC E59F0AF0        LDR              r0, =proj_offset
+  208 000002F0 E5901000        LDR              r1, [r0]
+  209 000002F4 E3A02020        MOV              r2, #0x20
+  210 000002F8 E5C12000        STRB             r2, [r1]
+  211 000002FC E59F0ACC        LDR              r0, =proj_exist_on_board_flag
+  212 00000300 E3A01000        MOV              r1, #0
+  213 00000304 E5C01000        STRB             r1, [r0]
+  214 00000308 EA00000E        B                done_once
+  215 0000030C         its_OMW
+  216 0000030C EB00002F        BL               proj_hits_enemy
+  217 00000310 EA00002C        B                done_end
+  218 00000314         its_end
+  219 00000314 E59F0AC8        LDR              r0, =proj_offset
+  220 00000318 E5901000        LDR              r1, [r0]
+  221 0000031C E3A02020        MOV              r2, #0x20
+  222 00000320 E5C12000        STRB             r2, [r1]
+  223 00000324 E59F0AA4        LDR              r0, =proj_exist_on_board_flag
+  224 00000328 E3A01000        MOV              r1, #0
+  225 0000032C E5C01000        STRB             r1, [r0]
+  226 00000330 EA000024        B                done_end
+  227 00000334         its_enemy_proj
+  228 00000334 E59F0AA8        LDR              r0, =proj_offset
+  229 00000338 E5901000        LDR              r1, [r0]
+  230 0000033C E2411019        SUB              r1, r1, #0x19
+  231 00000340 E5801000        STR              r1, [r0]
+  232 00000344 EA00001F        B                done_end
+  233 00000348         done_once
+  234 00000348 E59F3A94        LDR              r3, =proj_offset
+  235 0000034C E5937000        LDR              r7, [r3]
+  236 00000350 E5576019        LDRB             r6, [r7, #-0x19]
+  237 00000354 E3560053        CMP              r6, #0x53
+  238 00000358 0A000014        BEQ              not_Sss
+  239 0000035C E3560073        CMP              r6, #0x73
+  240 00000360 0A000012        BEQ              not_Sss
+  241 00000364 E3560020        CMP              r6, #0x20
+  242 00000368 0A000011        BEQ              one_barrier_case ;r9 stores r2 
+                                                            thats before '^'   
+                                                              ; if r9 is S, s  
+                                                            Skip 
+  243 0000036C         
+  244 0000036C E59F0A60        LDR              r0, =Ss_storing_address
+  245 00000370 E5D01000        LDRB             r1, [r0]
+  246 00000374 E3510000        CMP              r1, #0      ;#0x53 = 'S'    0x7
+                                                            3 = 's'
+  247 00000378 0A000005        BEQ              not_Ss
+  248 0000037C         
+  249 0000037C E59F3A60        LDR              r3, =proj_offset
+  250 00000380 E5934000        LDR              r4, [r3]
+  251 00000384 E5C41019        STRB             r1, [r4, #0x19] 
+                                                            ; storing it back
+  252 00000388 E3A02000        MOV              r2, #0
+  253 0000038C E5C02000        STRB             r2, [r0]    ;reset it to 0
+  254 00000390 EA000006        B                not_Sss
+  255 00000394         not_Ss
+  256 00000394 E59F0A3C        LDR              r0, =Ss2_storing_address
+  257 00000398 E5D01000        LDRB             r1, [r0]
+  258 0000039C E3510000        CMP              r1, #0
+  259 000003A0 0A000002        BEQ              not_Sss
+
+
+
+ARM Macro Assembler    Page 10 
+
+
+  260 000003A4         
+  261 000003A4 E59F3A38        LDR              r3, =proj_offset
+  262 000003A8 E5934000        LDR              r4, [r3]
+  263 000003AC E5C41019        STRB             r1, [r4, #0x19]
+  264 000003B0         not_Sss
+  265 000003B0 EA000004        B                done_end
+  266 000003B4         
+  267 000003B4         one_barrier_case
+  268 000003B4 E59F0A18        LDR              r0, =Ss_storing_address
+  269 000003B8 E5D01000        LDRB             r1, [r0]
+  270 000003BC         
+  271 000003BC E59F3A20        LDR              r3, =proj_offset
+  272 000003C0 E5934000        LDR              r4, [r3]
+  273 000003C4 EAFFFFFF        B                done_end
+  274 000003C8         
+  275 000003C8         done_once_Ss
+  276 000003C8         
+  277 000003C8         done_end
+  278 000003C8         ;BL update_map
+  279 000003C8 E8BD5FFF        LDMFD            sp!, {r0-r12,lr}
+  280 000003CC E12FFF1E        BX               lr
+  281 000003D0         
+  282 000003D0         
+  283 000003D0         proj_hits_enemy
+  284 000003D0 E92D4000        STMFD            SP!,{lr}
+  285 000003D4 E59F0A0C        LDR              r0, =promptoffset
+  286 000003D8 E5901000        LDR              r1, [r0]
+  287 000003DC E59F3A00        LDR              r3, =proj_offset
+  288 000003E0 E5934000        LDR              r4, [r3]
+  289 000003E4 E5D40000        LDRB             r0, [r4]
+  290 000003E8         
+  291 000003E8 E350005E        CMP              r0, #0x5E
+  292 000003EC 1A000001        BNE              dont_care_anymore
+  293 000003F0 E3A00020        MOV              r0, #0x20
+  294 000003F4 E5C40000        STRB             r0, [r4]
+  295 000003F8         dont_care_anymore
+  296 000003F8 E2445019        SUB              r5, r4, #0x19 ; r5 has the enem
+                                                            y hit location
+  297 000003FC         
+  298 000003FC E5D50000        LDRB             r0, [r5]
+  299 00000400 E350004F        CMP              r0, #0x4F
+  300 00000404 1A000015        BNE              not_O_score
+  301 00000408 E59F09DC        LDR              r0, =current_score_10
+  302 0000040C E3A01004        MOV              r1, #4
+  303 00000410 E5D02000        LDRB             r2, [r0]
+  304 00000414 E0822001        ADD              r2, r2 , r1
+  305 00000418 E352000A        CMP              r2, #10
+  306 0000041C BA00000C        BLT              its_normal
+  307 00000420 E242200A        SUB              r2, r2, #10
+  308 00000424 E59F09C4        LDR              r0, =current_score_100
+  309 00000428 E5901000        LDR              r1, [r0]
+  310 0000042C E2811001        ADD              r1, r1, #1
+  311 00000430 E351000A        CMP              r1, #10
+  312 00000434 BA000004        BLT              its_normal__2
+  313 00000438 E241100A        SUB              r1, r1, #10
+  314 0000043C E59F09B0        LDR              r0, =current_score_1000
+  315 00000440 E5D03000        LDRB             r3, [r0]
+  316 00000444 E0833001        ADD              r3, r3 , r1
+  317 00000448 E5C03000        STRB             r3, [r0]
+
+
+
+ARM Macro Assembler    Page 11 
+
+
+  318 0000044C         
+  319 0000044C         its_normal__2
+  320 0000044C E59F099C        LDR              r0, =current_score_100
+  321 00000450 E5801000        STR              r1, [r0]
+  322 00000454         its_normal
+  323 00000454 E59F0990        LDR              r0, =current_score_10
+  324 00000458 E5C02000        STRB             r2, [r0]
+  325 0000045C EA0000B9        B                done_adding_score
+  326 00000460         
+  327 00000460         not_O_score
+  328 00000460 E5D50000        LDRB             r0, [r5]
+  329 00000464 E350004D        CMP              r0, #0x4D
+  330 00000468 1A000015        BNE              not_M_score
+  331 0000046C E59F0978        LDR              r0, =current_score_10
+  332 00000470 E3A01002        MOV              r1, #2
+  333 00000474 E5D02000        LDRB             r2, [r0]
+  334 00000478 E0822001        ADD              r2, r2 , r1
+  335 0000047C E352000A        CMP              r2, #10
+  336 00000480 BA00000C        BLT              its_normal_1
+  337 00000484 E242200A        SUB              r2, r2, #10
+  338 00000488 E59F0960        LDR              r0, =current_score_100
+  339 0000048C E5901000        LDR              r1, [r0]
+  340 00000490 E2811001        ADD              r1, r1, #1
+  341 00000494 E351000A        CMP              r1, #10
+  342 00000498 BA000004        BLT              its_normal_1_2
+  343 0000049C E241100A        SUB              r1, r1, #10
+  344 000004A0 E59F094C        LDR              r0, =current_score_1000
+  345 000004A4 E5D03000        LDRB             r3, [r0]
+  346 000004A8 E0833001        ADD              r3, r3 , r1
+  347 000004AC E5C03000        STRB             r3, [r0]
+  348 000004B0         its_normal_1_2
+  349 000004B0 E59F0938        LDR              r0, =current_score_100
+  350 000004B4 E5801000        STR              r1, [r0]
+  351 000004B8         its_normal_1
+  352 000004B8 E59F092C        LDR              r0, =current_score_10
+  353 000004BC E5C02000        STRB             r2, [r0]
+  354 000004C0 EA0000A0        B                done_adding_score
+  355 000004C4         
+  356 000004C4         not_M_score
+  357 000004C4         
+  358 000004C4 E5D50000        LDRB             r0, [r5]
+  359 000004C8 E3500057        CMP              r0, #0x57
+  360 000004CC 1A000015        BNE              not_W_score
+  361 000004D0 E59F0914        LDR              r0, =current_score_10
+  362 000004D4 E3A01001        MOV              r1, #1
+  363 000004D8 E5D02000        LDRB             r2, [r0]
+  364 000004DC E0822001        ADD              r2, r2 , r1
+  365 000004E0 E352000A        CMP              r2, #10
+  366 000004E4 BA00000C        BLT              its_normal_2
+  367 000004E8 E242200A        SUB              r2, r2, #10
+  368 000004EC E59F08FC        LDR              r0, =current_score_100
+  369 000004F0 E5901000        LDR              r1, [r0]
+  370 000004F4 E2811001        ADD              r1, r1, #1
+  371 000004F8 E351000A        CMP              r1, #10
+  372 000004FC BA000004        BLT              its_normal_2_2
+  373 00000500 E241100A        SUB              r1, r1, #10
+  374 00000504 E59F08E8        LDR              r0, =current_score_1000
+  375 00000508 E5D03000        LDRB             r3, [r0]
+  376 0000050C E0833001        ADD              r3, r3 , r1
+
+
+
+ARM Macro Assembler    Page 12 
+
+
+  377 00000510 E5C03000        STRB             r3, [r0]
+  378 00000514         its_normal_2_2
+  379 00000514 E59F08D4        LDR              r0, =current_score_100
+  380 00000518 E5801000        STR              r1, [r0]
+  381 0000051C         its_normal_2
+  382 0000051C E59F08C8        LDR              r0, =current_score_10
+  383 00000520 E5C02000        STRB             r2, [r0]
+  384 00000524 EA000087        B                done_adding_score
+  385 00000528         
+  386 00000528         not_W_score
+  387 00000528         
+  388 00000528 E5D50000        LDRB             r0, [r5]
+  389 0000052C E3500058        CMP              r0, #0x58
+  390 00000530 1A000084        BNE              not_x_score
+  391 00000534         
+  392 00000534 E59F08BC        LDR              r0,=mothership_appears_hit
+  393 00000538 E5901000        LDR              r1, [r0]
+  394 0000053C E2811001        ADD              r1 ,r1 , #1
+  395 00000540 E5801000        STR              r1, [r0]
+  396 00000544 E3A0B004        MOV              r11, #4     ; number in r11 det
+                                                            ermines prob = 1/(r
+                                                            11)
+  397 00000548 E59F08AC        LDR              r0, =T0TC
+  398 0000054C E5901000        LDR              r1, [r0]
+  399 00000550 E3E020FF        LDR              r2, =0xFFFFFF00
+  400 00000554 E1C11002        BIC              r1, r1 , r2
+  401 00000558 E59F08A0        LDR              r0, =keystork_rng_counter
+  402 0000055C E5902000        LDR              r2, [r0]
+  403 00000560 E0811002        ADD              r1, r1 ,r2
+  404 00000564 E59F0898        LDR              r0, =current_keyboard_rng_input
+  405 00000568 E5902000        LDR              r2, [r0]
+  406 0000056C E0811002        ADD              r1, r1 ,r2
+  407 00000570 E3E020FF        LDR              r2, =0xFFFFFF00
+  408 00000574 E1C11002        BIC              r1, r1 , r2
+  409 00000578 E59FA888        LDR              r10, =number_of_loops
+  410 0000057C E5DA6000        LDRB             r6, [r10]
+  411 00000580 E0811006        ADD              r1, r1 ,r6
+  412 00000584 E1A0800B        MOV              r8, r11     ; immediates enters
+                                                             here shows the ran
+                                                            ge of random number
+                                                            s
+  413 00000588         continue_subb2
+  414 00000588 E1510008        CMP              r1, r8
+  415 0000058C BA000001        BLT              done_diving2
+  416 00000590 E0411008        SUB              r1, r1, r8
+  417 00000594 EAFFFFFB        B                continue_subb2
+  418 00000598         done_diving2
+  419 00000598         ;------------------------------------
+  420 00000598 E59F0850        LDR              r0, =current_score_100
+  421 0000059C E5902000        LDR              r2, [r0]
+  422 000005A0 E0812002        ADD              r2, r1, r2
+  423 000005A4 E352000A        CMP              r2, #10
+  424 000005A8 BA000004        BLT              its_least_then_10_100
+  425 000005AC E242200A        SUB              r2, r2 ,#10
+  426 000005B0 E59F383C        LDR              r3, =current_score_1000
+  427 000005B4 E5934000        LDR              r4, [r3]
+  428 000005B8 E2844001        ADD              r4, r4 , #1
+  429 000005BC E5834000        STR              r4, [r3]
+  430 000005C0         its_least_then_10_100
+
+
+
+ARM Macro Assembler    Page 13 
+
+
+  431 000005C0 E5802000        STR              r2, [r0]
+  432 000005C4         ;need to do exception
+  433 000005C4         ;------------------------------------
+  434 000005C4 E2811030        ADD              r1, r1 ,#0x30
+  435 000005C8 E59F483C        LDR              r4, =mothership_score_100 
+                                                            ; display only
+  436 000005CC E5841000        STR              r1, [r4]
+  437 000005D0         
+  438 000005D0         
+  439 000005D0 E3A0B00A        MOV              r11, #10    ; number in r11 det
+                                                            ermines prob = 1/(r
+                                                            11)
+  440 000005D4 E59F0820        LDR              r0, =T0TC
+  441 000005D8 E5901000        LDR              r1, [r0]
+  442 000005DC E3E020FF        LDR              r2, =0xFFFFFF00
+  443 000005E0 E1C11002        BIC              r1, r1 , r2
+  444 000005E4 E59F0814        LDR              r0, =keystork_rng_counter
+  445 000005E8 E5902000        LDR              r2, [r0]
+  446 000005EC E0811002        ADD              r1, r1 ,r2
+  447 000005F0 E59F080C        LDR              r0, =current_keyboard_rng_input
+  448 000005F4 E5902000        LDR              r2, [r0]
+  449 000005F8 E0811002        ADD              r1, r1 ,r2
+  450 000005FC E3E020FF        LDR              r2, =0xFFFFFF00
+  451 00000600 E1C11002        BIC              r1, r1 , r2
+  452 00000604 E59FA7FC        LDR              r10, =number_of_loops
+  453 00000608 E5DA6000        LDRB             r6, [r10]
+  454 0000060C E0811006        ADD              r1, r1 ,r6
+  455 00000610 E1A0800B        MOV              r8, r11     ; immediates enters
+                                                             here shows the ran
+                                                            ge of random number
+                                                            s
+  456 00000614         continue_subb22
+  457 00000614 E1510008        CMP              r1, r8
+  458 00000618 BA000001        BLT              done_diving22
+  459 0000061C E0411008        SUB              r1, r1, r8
+  460 00000620 EAFFFFFB        B                continue_subb22
+  461 00000624         done_diving22
+  462 00000624         ;------------------------------------
+  463 00000624 E59F07C0        LDR              r0, =current_score_10
+  464 00000628 E5902000        LDR              r2, [r0]
+  465 0000062C E0812002        ADD              r2, r1, r2
+  466 00000630 E352000A        CMP              r2, #10
+  467 00000634 BA00000B        BLT              its_least_then_10_10
+  468 00000638 E242200A        SUB              r2, r2 ,#10
+  469 0000063C E59F37AC        LDR              r3, =current_score_100
+  470 00000640 E5934000        LDR              r4, [r3]
+  471 00000644 E2844001        ADD              r4, r4 , #1
+  472 00000648 E354000A        CMP              r4, #10
+  473 0000064C BA000004        BLT              its_least_then_100_10
+  474 00000650 E244400A        SUB              r4, r4 , #10
+  475 00000654 E59F6798        LDR              r6, =current_score_1000
+  476 00000658 E5967000        LDR              r7, [r6]
+  477 0000065C E2877001        ADD              r7, r7, #1
+  478 00000660 E5867000        STR              r7, [r6]
+  479 00000664         its_least_then_100_10
+  480 00000664 E5834000        STR              r4, [r3]
+  481 00000668         its_least_then_10_10
+  482 00000668 E5802000        STR              r2, [r0]
+  483 0000066C         ;------------------------------------
+
+
+
+ARM Macro Assembler    Page 14 
+
+
+  484 0000066C E2811030        ADD              r1, r1 ,#0x30
+  485 00000670 E59F4798        LDR              r4, =mothership_score_10
+  486 00000674 E5C41000        STRB             r1, [r4]
+  487 00000678         
+  488 00000678         
+  489 00000678         ;MOV r2, #5
+  490 00000678         
+  491 00000678 E3A0B00A        MOV              r11, #10    ; number in r11 det
+                                                            ermines prob = 1/(r
+                                                            11)
+  492 0000067C E59F0778        LDR              r0, =T0TC
+  493 00000680 E5901000        LDR              r1, [r0]
+  494 00000684 E3E020FF        LDR              r2, =0xFFFFFF00
+  495 00000688 E1C11002        BIC              r1, r1 , r2
+  496 0000068C E59F076C        LDR              r0, =keystork_rng_counter
+  497 00000690 E5902000        LDR              r2, [r0]
+  498 00000694 E0811002        ADD              r1, r1 ,r2
+  499 00000698 E59F0764        LDR              r0, =current_keyboard_rng_input
+  500 0000069C E5902000        LDR              r2, [r0]
+  501 000006A0 E0811002        ADD              r1, r1 ,r2
+  502 000006A4 E3E020FF        LDR              r2, =0xFFFFFF00
+  503 000006A8 E1C11002        BIC              r1, r1 , r2
+  504 000006AC E59FA754        LDR              r10, =number_of_loops
+  505 000006B0 E5DA6000        LDRB             r6, [r10]
+  506 000006B4 E0811006        ADD              r1, r1 ,r6
+  507 000006B8 E1A0800B        MOV              r8, r11     ; immediates enters
+                                                             here shows the ran
+                                                            ge of random number
+                                                            s
+  508 000006BC         continue_subb222
+  509 000006BC E1510008        CMP              r1, r8
+  510 000006C0 BA000001        BLT              done_diving222
+  511 000006C4 E0411008        SUB              r1, r1, r8
+  512 000006C8 EAFFFFFB        B                continue_subb222
+  513 000006CC         done_diving222
+  514 000006CC         ;------------------------------------
+  515 000006CC E59F0740        LDR              r0, =current_score_1
+  516 000006D0 E5902000        LDR              r2, [r0]
+  517 000006D4 E0812002        ADD              r2, r1, r2
+  518 000006D8 E352000A        CMP              r2, #10
+  519 000006DC BA000011        BLT              its_least_then_10_1
+  520 000006E0 E242200A        SUB              r2, r2 ,#10
+  521 000006E4 E59F3700        LDR              r3, =current_score_10
+  522 000006E8 E5934000        LDR              r4, [r3]
+  523 000006EC E2844001        ADD              r4, r4 , #1
+  524 000006F0 E354000A        CMP              r4, #10
+  525 000006F4 BA00000A        BLT              its_least_then_100_1
+  526 000006F8 E244400A        SUB              r4, r4 , #10
+  527 000006FC E59F66EC        LDR              r6, =current_score_100
+  528 00000700 E5967000        LDR              r7, [r6]
+  529 00000704 E2877001        ADD              r7, r7, #1
+  530 00000708 E357000A        CMP              r7, #10
+  531 0000070C BA000003        BLT              its_least_then_1000_1
+  532 00000710 E59F86DC        LDR              r8, =current_score_1000
+  533 00000714 E5989000        LDR              r9, [r8]
+  534 00000718 E2899001        ADD              r9, r9, #1
+  535 0000071C E5889000        STR              r9, [r8]
+  536 00000720         
+  537 00000720         its_least_then_1000_1
+
+
+
+ARM Macro Assembler    Page 15 
+
+
+  538 00000720 E5867000        STR              r7, [r6]
+  539 00000724         its_least_then_100_1
+  540 00000724 E5834000        STR              r4, [r3]
+  541 00000728         its_least_then_10_1
+  542 00000728 E5802000        STR              r2, [r0]
+  543 0000072C         
+  544 0000072C         ;------------------------------------  
+  545 0000072C E2811030        ADD              r1, r1 ,#0x30
+  546 00000730 E59F46E0        LDR              r4, =mothership_score_1
+  547 00000734 E5C41000        STRB             r1, [r4]
+  548 00000738 E59F06DC        LDR              r0, =mothership_exist_on_board
+  549 0000073C E3A01000        MOV              r1, #0
+  550 00000740 E5801000        STR              r1, [r0]
+  551 00000744         
+  552 00000744         
+  553 00000744 EA0000B3        B                done_adding_score_after_x
+  554 00000748         not_x_score
+  555 00000748         done_adding_score
+  556 00000748         
+  557 00000748 EB0000B4        BL               reducing_enemy_right_counts
+  558 0000074C EB000127        BL               reducing_enemy_counts
+  559 00000750 EB000151        BL               enemyoffset_hitted
+  560 00000754         ;r5 is collision spot
+  561 00000754 E3A00020        MOV              r0, #0x20
+  562 00000758 E5C50000        STRB             r0, [r5]
+  563 0000075C         ; the reason why its deleting 2 is because offset addres
+                       s
+  564 0000075C         ;if r4 is 5e then it will be clear!
+  565 0000075C E5D49000        LDRB             r9, [r4]
+  566 00000760 E359005E        CMP              r9, #0x5E
+  567 00000764 1A000000        BNE              dont_clear_its_not
+  568 00000768 E5C40000        STRB             r0, [r4]
+  569 0000076C         dont_clear_its_not
+  570 0000076C         
+  571 0000076C E59F065C        LDR              r0 , =proj_exist_on_board_flag
+  572 00000770 E3A01000        MOV              r1, #0
+  573 00000774 E5801000        STR              r1, [r0]
+  574 00000778         ;4.Set proj_on_board_flag back to 0
+  575 00000778         ;5.Add score
+  576 00000778         ;6.????
+  577 00000778         
+  578 00000778 E59F06A0        LDR              r0, =enemycounts
+  579 0000077C E5D01000        LDRB             r1, [r0]
+  580 00000780 E3510000        CMP              r1, #0
+  581 00000784 1A0000A3        BNE              game_not_advance_yet
+  582 00000788         
+  583 00000788 E59F0694        LDR              r0, =enemy2counts
+  584 0000078C E5D01000        LDRB             r1, [r0]
+  585 00000790 E3510000        CMP              r1, #0
+  586 00000794 1A00009F        BNE              game_not_advance_yet
+  587 00000798         
+  588 00000798 E59F0688        LDR              r0, =enemy3counts
+  589 0000079C E5D01000        LDRB             r1, [r0]
+  590 000007A0 E3510000        CMP              r1, #0
+  591 000007A4 1A00009B        BNE              game_not_advance_yet
+  592 000007A8         
+  593 000007A8 E59F067C        LDR              r0, =enemy4counts
+  594 000007AC E5D01000        LDRB             r1, [r0]
+  595 000007B0 E3510000        CMP              r1, #0
+
+
+
+ARM Macro Assembler    Page 16 
+
+
+  596 000007B4 1A000097        BNE              game_not_advance_yet
+  597 000007B8         
+  598 000007B8 E59F0670        LDR              r0, =enemy5counts
+  599 000007BC E5D01000        LDRB             r1, [r0]
+  600 000007C0 E3510000        CMP              r1, #0
+  601 000007C4 1A000093        BNE              game_not_advance_yet
+  602 000007C8         
+  603 000007C8 E8BD4000        LDMFD            SP!,{lr}
+  604 000007CC         ;deinitializing everything here
+  605 000007CC E59F0660        LDR              r0, =T0TCR
+  606 000007D0 E5901000        LDR              r1, [r0]
+  607 000007D4 E2011000        AND              r1, r1, #0x0
+  608 000007D8 E5801000        STR              r1, [r0]
+  609 000007DC         
+  610 000007DC E59F0654        LDR              r0, =T1TCR
+  611 000007E0 E5901000        LDR              r1, [r0]
+  612 000007E4 E2011000        AND              r1, r1, #0x0
+  613 000007E8 E5801000        STR              r1, [r0]
+  614 000007EC         
+  615 000007EC         ;LTORG
+  616 000007EC E59F0648        LDR              r0, =current_level
+  617 000007F0 E5901000        LDR              r1, [r0]
+  618 000007F4 E2811001        ADD              r1, r1, #1
+  619 000007F8 E5801000        STR              r1, [r0]
+  620 000007FC         
+  621 000007FC         ;-------------------------------------------------------
+                       -
+  622 000007FC E59F05F0        LDR              r0, =current_score_1000
+  623 00000800 E5901000        LDR              r1, [r0]
+  624 00000804 E59F2634        LDR              r2, =total_score_1000
+  625 00000808 E5923000        LDR              r3, [r2]
+  626 0000080C E0833001        ADD              r3, r3, r1
+  627 00000810 E5823000        STR              r3, [r2]
+  628 00000814 E59F4628        LDR              r4, =prompt_storage_offset
+  629 00000818 E5945000        LDR              r5, [r4]    ; r5 contains the c
+                                                            urrent address for 
+                                                            offset
+  630 0000081C E2817030        ADD              r7, r1, #0x30
+  631 00000820 E4C57001        STRB             r7, [r5],#1
+  632 00000824 E5845000        STR              r5, [r4]
+  633 00000828 E3A01000        MOV              r1, #0
+  634 0000082C E5801000        STR              r1, [r0]
+  635 00000830         ;-------------------------------------------------------
+                       - 
+  636 00000830         ;-------------------------------------------------------
+                       - 
+  637 00000830         
+  638 00000830 E59F05B8        LDR              r0, =current_score_100
+  639 00000834 E5901000        LDR              r1, [r0]
+  640 00000838 E59F2608        LDR              r2, =total_score_100
+  641 0000083C E5923000        LDR              r3, [r2]
+  642 00000840 E0833001        ADD              r3, r3, r1
+  643 00000844         
+  644 00000844 E353000A        CMP              r3, #10
+  645 00000848 BA000004        BLT              its_totally_fine_3
+  646 0000084C E243300A        SUB              r3, r3, #10
+  647 00000850 E59F45E8        LDR              r4, =total_score_1000
+  648 00000854 E5945000        LDR              r5, [r4]
+  649 00000858 E2855001        ADD              r5, r5 , #1
+
+
+
+ARM Macro Assembler    Page 17 
+
+
+  650 0000085C E5845000        STR              r5, [r4]
+  651 00000860         its_totally_fine_3
+  652 00000860 E5823000        STR              r3, [r2]
+  653 00000864         
+  654 00000864         
+  655 00000864 E59F45D8        LDR              r4, =prompt_storage_offset
+  656 00000868 E5945000        LDR              r5, [r4]    ; r5 contains the c
+                                                            urrent address for 
+                                                            offset
+  657 0000086C E2817030        ADD              r7, r1, #0x30
+  658 00000870 E4C57001        STRB             r7, [r5],#1
+  659 00000874 E5845000        STR              r5, [r4]
+  660 00000878 E3A01000        MOV              r1, #0
+  661 0000087C E5801000        STR              r1, [r0]
+  662 00000880         ;-------------------------------------------------------
+                       - 
+  663 00000880         ;-------------------------------------------------------
+                       -  
+  664 00000880         
+  665 00000880 E59F0564        LDR              r0, =current_score_10
+  666 00000884 E5901000        LDR              r1, [r0]
+  667 00000888 E59F25BC        LDR              r2, =total_score_10
+  668 0000088C E5923000        LDR              r3, [r2]
+  669 00000890 E0833001        ADD              r3, r3, r1
+  670 00000894         
+  671 00000894 E353000A        CMP              r3, #10
+  672 00000898 BA00000B        BLT              its_totally_fine_2
+  673 0000089C E243300A        SUB              r3, r3, #10
+  674 000008A0 E59F45A0        LDR              r4, =total_score_100
+  675 000008A4 E5945000        LDR              r5, [r4]
+  676 000008A8 E2855001        ADD              r5, r5, #1
+  677 000008AC E355000A        CMP              r5, #10
+  678 000008B0 BA000004        BLT              its_totally_fine_fine_2
+  679 000008B4 E245500A        SUB              r5, r5 , #10
+  680 000008B8 E59F6580        LDR              r6, =total_score_1000
+  681 000008BC E5967000        LDR              r7, [r6]
+  682 000008C0 E2877001        ADD              r7, r7, #1
+  683 000008C4 E5867000        STR              r7, [r6]
+  684 000008C8         its_totally_fine_fine_2
+  685 000008C8 E5845000        STR              r5, [r4]
+  686 000008CC         its_totally_fine_2
+  687 000008CC E5823000        STR              r3, [r2]
+  688 000008D0         
+  689 000008D0 E59F456C        LDR              r4, =prompt_storage_offset
+  690 000008D4 E5945000        LDR              r5, [r4]    ; r5 contains the c
+                                                            urrent address for 
+                                                            offset
+  691 000008D8 E2817030        ADD              r7, r1, #0x30
+  692 000008DC E4C57001        STRB             r7, [r5],#1
+  693 000008E0 E5845000        STR              r5, [r4]
+  694 000008E4 E3A01000        MOV              r1, #0
+  695 000008E8 E5801000        STR              r1, [r0]
+  696 000008EC         ;-------------------------------------------------------
+                       - 
+  697 000008EC         ;-------------------------------------------------------
+                       - 
+  698 000008EC         
+  699 000008EC E59F0520        LDR              r0, =current_score_1
+  700 000008F0 E5901000        LDR              r1, [r0]
+
+
+
+ARM Macro Assembler    Page 18 
+
+
+  701 000008F4 E59F2554        LDR              r2, =total_score_1
+  702 000008F8 E5923000        LDR              r3, [r2]
+  703 000008FC E0833001        ADD              r3, r3, r1
+  704 00000900         ;r4,r5,r6,r7,r8,r9
+  705 00000900 E353000A        CMP              r3, #10
+  706 00000904 BA000012        BLT              its_totally_fine
+  707 00000908 E243300A        SUB              r3, r3, #10
+  708 0000090C E59F4538        LDR              r4, =total_score_10
+  709 00000910 E5945000        LDR              r5, [r4]
+  710 00000914 E2855001        ADD              r5, r5, #1  ; r5 is 10 digit
+  711 00000918 E355000A        CMP              r5, #10
+  712 0000091C BA00000B        BLT              its_totally_fine_fine
+  713 00000920 E245500A        SUB              r5, r5, #10
+  714 00000924 E59F651C        LDR              r6, =total_score_100
+  715 00000928 E5967000        LDR              r7, [r6]
+  716 0000092C E2877001        ADD              r7, r7, #1
+  717 00000930 E357000A        CMP              r7, #10
+  718 00000934 BA000004        BLT              its_totally_fine_fine_fine
+  719 00000938 E247700A        SUB              r7, r7, #10
+  720 0000093C E59F84FC        LDR              r8, =total_score_1000
+  721 00000940 E5989000        LDR              r9, [r8]
+  722 00000944 E2899001        ADD              r9, r9, #1
+  723 00000948         
+  724 00000948 E5889000        STR              r9, [r8]
+  725 0000094C         its_totally_fine_fine_fine
+  726 0000094C E5867000        STR              r7, [r6]
+  727 00000950         its_totally_fine_fine
+  728 00000950 E5845000        STR              r5, [r4]
+  729 00000954         its_totally_fine
+  730 00000954 E5823000        STR              r3, [r2]
+  731 00000958         
+  732 00000958         
+  733 00000958         
+  734 00000958         
+  735 00000958 E59F44E4        LDR              r4, =prompt_storage_offset
+  736 0000095C E5945000        LDR              r5, [r4]    ; r5 contains the c
+                                                            urrent address for 
+                                                            offset
+  737 00000960 E2817030        ADD              r7, r1, #0x30
+  738 00000964 E4C57001        STRB             r7, [r5],#1
+  739 00000968 E5845000        STR              r5, [r4]
+  740 0000096C E3A01000        MOV              r1, #0
+  741 00000970 E5801000        STR              r1, [r0]
+  742 00000974         ;-------------------------------------------------------
+                       - 
+  743 00000974         
+  744 00000974         
+  745 00000974         ;-------------------------------------------------------
+                       - 
+  746 00000974         ;Storing Death counts
+  747 00000974 E59F04D8        LDR              r0, =lives
+  748 00000978 E5D01000        LDRB             r1, [r0]
+  749 0000097C E2611004        RSB              r1, r1 ,#4
+  750 00000980 E59F44BC        LDR              r4, =prompt_storage_offset
+  751 00000984 E5945000        LDR              r5, [r4]
+  752 00000988 E2811030        ADD              r1, r1, #0x30
+  753 0000098C E4C51001        STRB             r1, [r5], #1
+  754 00000990 E5845000        STR              r5, [r4]
+  755 00000994         ;-------------------------------------------------------
+
+
+
+ARM Macro Assembler    Page 19 
+
+
+                       - 
+  756 00000994         ;-------------------------------------------------------
+                       - 
+  757 00000994         ;Storing Motherships Appears/Hits
+  758 00000994         
+  759 00000994 E59F045C        LDR              r0, =mothership_appears_hit
+  760 00000998 E5901000        LDR              r1, [r0]
+  761 0000099C E59F24A0        LDR              r2, =prompt_storage_offset
+  762 000009A0 E5923000        LDR              r3, [r2]
+  763 000009A4 E2811030        ADD              r1, r1 , #0x30
+  764 000009A8 E4C31001        STRB             r1, [r3],#1
+  765 000009AC E5823000        STR              r3, [r2]
+  766 000009B0         
+  767 000009B0 E59F04A0        LDR              r0, =mothership_appears_count
+  768 000009B4 E5901000        LDR              r1, [r0]
+  769 000009B8 E59F2484        LDR              r2, =prompt_storage_offset
+  770 000009BC E5923000        LDR              r3, [r2]
+  771 000009C0 E2811030        ADD              r1, r1, #0x30
+  772 000009C4 E4C31001        STRB             r1, [r3],#1
+  773 000009C8 E5823000        STR              r3, [r2]
+  774 000009CC         
+  775 000009CC         ;-------------------------------------------------------
+                       - 
+  776 000009CC         ;-------------------------------------------------------
+                       - 
+  777 000009CC         ;Storing Time 
+  778 000009CC         
+  779 000009CC E59F0488        LDR              r0, =time_left_100
+  780 000009D0 E5901000        LDR              r1, [r0]
+  781 000009D4 E59F2468        LDR              r2, =prompt_storage_offset
+  782 000009D8 E5923000        LDR              r3, [r2]
+  783 000009DC E4C31001        STRB             r1, [r3],#1
+  784 000009E0 E5823000        STR              r3, [r2]
+  785 000009E4         
+  786 000009E4 E59F0474        LDR              r0, =time_left_10
+  787 000009E8 E5901000        LDR              r1, [r0]
+  788 000009EC E59F2450        LDR              r2, =prompt_storage_offset
+  789 000009F0 E5923000        LDR              r3, [r2]
+  790 000009F4 E4C31001        STRB             r1, [r3],#1
+  791 000009F8 E5823000        STR              r3, [r2]
+  792 000009FC         
+  793 000009FC E59F0460        LDR              r0, =time_left_1
+  794 00000A00 E5901000        LDR              r1, [r0]
+  795 00000A04 E59F2438        LDR              r2, =prompt_storage_offset
+  796 00000A08 E5923000        LDR              r3, [r2]
+  797 00000A0C E4C31001        STRB             r1, [r3],#1
+  798 00000A10 E5823000        STR              r3, [r2]
+  799 00000A14         
+  800 00000A14         
+  801 00000A14         
+  802 00000A14         
+  803 00000A14 EAFFFFFE        B                lab7_restart
+  804 00000A18         
+  805 00000A18         done_adding_score_after_x
+  806 00000A18         game_not_advance_yet
+  807 00000A18         
+  808 00000A18 E8BD4000        LDMFD            SP!,{lr}
+  809 00000A1C E12FFF1E        BX               lr
+  810 00000A20         
+
+
+
+ARM Macro Assembler    Page 20 
+
+
+  811 00000A20         reducing_enemy_right_counts
+  812 00000A20 E92D4000        STMFD            sp!, {lr}
+  813 00000A24         
+  814 00000A24 E59F043C        LDR              r0, =enemy5offset
+  815 00000A28 E5901000        LDR              r1, [r0]
+  816 00000A2C E59F3438        LDR              r3, =right_enemy5counts
+  817 00000A30 E5932000        LDR              r2, [r3]
+  818 00000A34 E2422001        SUB              r2, r2, #1
+  819 00000A38 E0813002        ADD              r3, r1, r2
+  820 00000A3C E2822001        ADD              r2, r2, #1
+  821 00000A40 E1530005        CMP              r3, r5
+  822 00000A44 1A00000C        BNE              not_5th_right_enemy
+  823 00000A48         ;===========================
+  824 00000A48 E2422001        SUB              r2 , r2 , #1
+  825 00000A4C         didnt_find_next_rightmost5
+  826 00000A4C E59F4418        LDR              r4, =right_enemy5counts
+  827 00000A50 E3720001        CMP              r2,#-1
+  828 00000A54 0A000006        BEQ              found_the_next_rightmost5
+  829 00000A58 E2422001        SUB              r2, r2, #1
+  830 00000A5C E7D10002        LDRB             r0, [r1,r2] ; checking if the p
+                                                            revious spot is emp
+                                                            ty
+  831 00000A60 E2822001        ADD              r2, r2, #1
+  832 00000A64 E3500020        CMP              r0, #0x20   ; if its empty, tha
+                                                            t means enemy has b
+                                                            een destroyed, loop
+                                                             back
+  833 00000A68 1A000001        BNE              found_the_next_rightmost5
+  834 00000A6C E2422001        SUB              r2, r2 , #1
+  835 00000A70 EAFFFFF5        B                didnt_find_next_rightmost5
+  836 00000A74         found_the_next_rightmost5
+  837 00000A74 E5C42000        STRB             r2, [r4]
+  838 00000A78 EA00005A        B                done_reducing_enemy_right_count
+s
+  839 00000A7C         ;====================================
+  840 00000A7C         
+  841 00000A7C         not_5th_right_enemy
+  842 00000A7C         
+  843 00000A7C E59F03EC        LDR              r0, =enemy4offset
+  844 00000A80 E5901000        LDR              r1, [r0]
+  845 00000A84 E59F33E8        LDR              r3, =right_enemy4counts
+  846 00000A88 E5932000        LDR              r2, [r3]
+  847 00000A8C E2422001        SUB              r2, r2, #1
+  848 00000A90 E0813002        ADD              r3, r1, r2
+  849 00000A94 E2822001        ADD              r2, r2, #1
+  850 00000A98 E1530005        CMP              r3, r5
+  851 00000A9C 1A00000C        BNE              not_4th_right_enemy
+  852 00000AA0         
+  853 00000AA0         ;==============================
+  854 00000AA0 E2422001        SUB              r2 , r2 , #1
+  855 00000AA4         didnt_find_next_rightmost4
+  856 00000AA4 E59F43C8        LDR              r4, =right_enemy4counts
+  857 00000AA8 E3720001        CMP              r2,#-1
+  858 00000AAC 0A000006        BEQ              found_the_next_rightmost4
+  859 00000AB0 E2422001        SUB              r2, r2, #1
+  860 00000AB4 E7D10002        LDRB             r0, [r1,r2] ; checking if the p
+                                                            revious spot is emp
+                                                            ty
+  861 00000AB8 E2822001        ADD              r2, r2, #1
+
+
+
+ARM Macro Assembler    Page 21 
+
+
+  862 00000ABC E3500020        CMP              r0, #0x20   ; if its empty, tha
+                                                            t means enemy has b
+                                                            een destroyed, loop
+                                                             back
+  863 00000AC0 1A000001        BNE              found_the_next_rightmost4
+  864 00000AC4 E2422001        SUB              r2, r2 , #1
+  865 00000AC8 EAFFFFF5        B                didnt_find_next_rightmost4
+  866 00000ACC         found_the_next_rightmost4
+  867 00000ACC E5C42000        STRB             r2, [r4]
+  868 00000AD0 EA000044        B                done_reducing_enemy_right_count
+s
+  869 00000AD4         ;====================================
+  870 00000AD4         
+  871 00000AD4         not_4th_right_enemy
+  872 00000AD4         
+  873 00000AD4 E59F039C        LDR              r0, =enemy3offset
+  874 00000AD8 E5901000        LDR              r1, [r0]
+  875 00000ADC E59F3398        LDR              r3, =right_enemy3counts
+  876 00000AE0 E5932000        LDR              r2, [r3]
+  877 00000AE4 E2422001        SUB              r2, r2, #1
+  878 00000AE8 E0813002        ADD              r3, r1, r2
+  879 00000AEC E2822001        ADD              r2, r2, #1
+  880 00000AF0 E1530005        CMP              r3, r5
+  881 00000AF4 1A00000D        BNE              not_3th_right_enemy
+  882 00000AF8 E59F337C        LDR              r3, =right_enemy3counts
+  883 00000AFC         ;===============================
+  884 00000AFC E2422001        SUB              r2 , r2 , #1
+  885 00000B00         didnt_find_next_rightmost3
+  886 00000B00 E59F4374        LDR              r4, =right_enemy3counts
+  887 00000B04 E3520000        CMP              r2,#0
+  888 00000B08 0A000006        BEQ              found_the_next_rightmost3
+  889 00000B0C E2422001        SUB              r2, r2, #1
+  890 00000B10 E7D10002        LDRB             r0, [r1,r2] ; checking if the p
+                                                            revious spot is emp
+                                                            ty
+  891 00000B14 E2822001        ADD              r2, r2, #1
+  892 00000B18 E3500020        CMP              r0, #0x20   ; if its empty, tha
+                                                            t means enemy has b
+                                                            een destroyed, loop
+                                                             back
+  893 00000B1C 1A000001        BNE              found_the_next_rightmost3
+  894 00000B20 E2422001        SUB              r2, r2 , #1
+  895 00000B24 EAFFFFF5        B                didnt_find_next_rightmost3
+  896 00000B28         found_the_next_rightmost3
+  897 00000B28 E5C42000        STRB             r2, [r4]
+  898 00000B2C EA00002D        B                done_reducing_enemy_right_count
+s
+  899 00000B30         ;=====================================
+  900 00000B30         
+  901 00000B30         not_3th_right_enemy
+  902 00000B30         
+  903 00000B30 E59F0348        LDR              r0, =enemy2offset
+  904 00000B34 E5901000        LDR              r1, [r0]
+  905 00000B38 E59F3344        LDR              r3, =right_enemy2counts
+  906 00000B3C E5932000        LDR              r2, [r3]
+  907 00000B40 E2422001        SUB              r2, r2, #1
+  908 00000B44 E0813002        ADD              r3, r1, r2
+  909 00000B48 E2822001        ADD              r2, r2, #1
+  910 00000B4C E1530005        CMP              r3, r5
+
+
+
+ARM Macro Assembler    Page 22 
+
+
+  911 00000B50 1A00000D        BNE              not_2th_right_enemy
+  912 00000B54 E59F3328        LDR              r3, =right_enemy2counts
+  913 00000B58         ;===============================
+  914 00000B58 E2422001        SUB              r2 , r2 , #1
+  915 00000B5C         didnt_find_next_rightmost2
+  916 00000B5C E59F4320        LDR              r4, =right_enemy2counts
+  917 00000B60 E3520000        CMP              r2,#0
+  918 00000B64 0A000006        BEQ              found_the_next_rightmost2
+  919 00000B68 E2422001        SUB              r2, r2, #1
+  920 00000B6C E7D10002        LDRB             r0, [r1,r2] ; checking if the p
+                                                            revious spot is emp
+                                                            ty
+  921 00000B70 E2822001        ADD              r2, r2, #1
+  922 00000B74 E3500020        CMP              r0, #0x20   ; if its empty, tha
+                                                            t means enemy has b
+                                                            een destroyed, loop
+                                                             back
+  923 00000B78 1A000001        BNE              found_the_next_rightmost2
+  924 00000B7C E2422001        SUB              r2, r2 , #1
+  925 00000B80 EAFFFFF5        B                didnt_find_next_rightmost2
+  926 00000B84         found_the_next_rightmost2
+  927 00000B84 E5C42000        STRB             r2, [r4]
+  928 00000B88 EA000016        B                done_reducing_enemy_right_count
+s
+  929 00000B8C         ;=====================================
+  930 00000B8C         not_2th_right_enemy
+  931 00000B8C E59F02F4        LDR              r0, =enemyoffset
+  932 00000B90 E5901000        LDR              r1, [r0]
+  933 00000B94 E59F32F0        LDR              r3, =right_enemycounts
+  934 00000B98 E5932000        LDR              r2, [r3]
+  935 00000B9C E2422001        SUB              r2, r2, #1
+  936 00000BA0 E0813002        ADD              r3, r1, r2
+  937 00000BA4 E2822001        ADD              r2, r2, #1
+  938 00000BA8 E1530005        CMP              r3, r5
+  939 00000BAC 1A00000D        BNE              not_1th_right_enemy
+  940 00000BB0 E59F32D4        LDR              r3, =right_enemycounts
+  941 00000BB4         ;================================ 
+  942 00000BB4 E2422001        SUB              r2 , r2 , #1
+  943 00000BB8         didnt_find_next_rightmost
+  944 00000BB8 E59F42CC        LDR              r4, =right_enemycounts
+  945 00000BBC E3520000        CMP              r2,#0
+  946 00000BC0 0A000006        BEQ              found_the_next_rightmost
+  947 00000BC4 E2422001        SUB              r2, r2, #1
+  948 00000BC8 E7D10002        LDRB             r0, [r1,r2] ; checking if the p
+                                                            revious spot is emp
+                                                            ty
+  949 00000BCC E2822001        ADD              r2, r2, #1
+  950 00000BD0 E3500020        CMP              r0, #0x20   ; if its empty, tha
+                                                            t means enemy has b
+                                                            een destroyed, loop
+                                                             back
+  951 00000BD4 1A000001        BNE              found_the_next_rightmost
+  952 00000BD8 E2422001        SUB              r2, r2 , #1
+  953 00000BDC EAFFFFF5        B                didnt_find_next_rightmost
+  954 00000BE0         found_the_next_rightmost
+  955 00000BE0 E5C42000        STRB             r2, [r4]
+  956 00000BE4 EAFFFFFF        B                done_reducing_enemy_right_count
+s
+  957 00000BE8         ;====================================
+
+
+
+ARM Macro Assembler    Page 23 
+
+
+  958 00000BE8         
+  959 00000BE8         not_1th_right_enemy
+  960 00000BE8         
+  961 00000BE8         done_reducing_enemy_right_counts
+  962 00000BE8 E8BD4000        LDMFD            sp!, {lr}
+  963 00000BEC E12FFF1E        BX               lr
+  964 00000BF0         
+  965 00000BF0         reducing_enemy_counts
+  966 00000BF0         ;r5 has the hit locaiton
+  967 00000BF0 E92D4000        STMFD            sp!, {lr}
+  968 00000BF4 E59F026C        LDR              r0, =enemy5offset
+  969 00000BF8 E5901000        LDR              r1, [r0]
+  970 00000BFC E1510005        CMP              r1, r5
+  971 00000C00 CA000004        BGT              not_5th_formation_next
+  972 00000C04         
+  973 00000C04 E59F0224        LDR              r0, =enemy5counts
+  974 00000C08 E5901000        LDR              r1, [r0]
+  975 00000C0C E2411001        SUB              r1, r1, #1
+  976 00000C10 E5801000        STR              r1, [r0]
+  977 00000C14 EA00001E        B                done_subtracting
+  978 00000C18         not_5th_formation_next
+  979 00000C18         
+  980 00000C18 E59F0250        LDR              r0, =enemy4offset
+  981 00000C1C E5901000        LDR              r1, [r0]
+  982 00000C20 E1510005        CMP              r1, r5
+  983 00000C24 CA000004        BGT              not_4th_formation_next
+  984 00000C28         
+  985 00000C28 E59F01FC        LDR              r0, =enemy4counts
+  986 00000C2C E5901000        LDR              r1, [r0]
+  987 00000C30 E2411001        SUB              r1, r1 ,#1
+  988 00000C34 E5801000        STR              r1, [r0]
+  989 00000C38 EA000015        B                done_subtracting
+  990 00000C3C         not_4th_formation_next
+  991 00000C3C         
+  992 00000C3C E59F0234        LDR              r0, =enemy3offset
+  993 00000C40 E5901000        LDR              r1, [r0]
+  994 00000C44 E1510005        CMP              r1, r5
+  995 00000C48 CA000004        BGT              not_3th_formation_next
+  996 00000C4C         
+  997 00000C4C E59F01D4        LDR              r0, =enemy3counts
+  998 00000C50 E5901000        LDR              r1, [r0]
+  999 00000C54 E2411001        SUB              r1 ,r1 , #1
+ 1000 00000C58 E5801000        STR              r1, [r0]
+ 1001 00000C5C EA00000C        B                done_subtracting
+ 1002 00000C60         not_3th_formation_next
+ 1003 00000C60         
+ 1004 00000C60 E59F0218        LDR              r0, =enemy2offset
+ 1005 00000C64 E5901000        LDR              r1,[r0]
+ 1006 00000C68 E1510005        CMP              r1, r5
+ 1007 00000C6C CA000004        BGT              not_2th_formation_next
+ 1008 00000C70         
+ 1009 00000C70 E59F01AC        LDR              r0, =enemy2counts
+ 1010 00000C74 E5901000        LDR              r1, [r0]
+ 1011 00000C78 E2411001        SUB              r1, r1, #1
+ 1012 00000C7C E5801000        STR              r1, [r0]
+ 1013 00000C80 EA000003        B                done_subtracting
+ 1014 00000C84         not_2th_formation_next
+ 1015 00000C84         
+ 1016 00000C84 E59F0194        LDR              r0, =enemycounts
+
+
+
+ARM Macro Assembler    Page 24 
+
+
+ 1017 00000C88 E5901000        LDR              r1, [r0]
+ 1018 00000C8C E2411001        SUB              r1, r1, #1
+ 1019 00000C90 E5801000        STR              r1, [r0]
+ 1020 00000C94         
+ 1021 00000C94         done_subtracting
+ 1022 00000C94 E8BD4000        LDMFD            sp!, {lr}
+ 1023 00000C98 E12FFF1E        BX               lr
+ 1024 00000C9C         
+ 1025 00000C9C         
+ 1026 00000C9C         enemyoffset_hitted
+ 1027 00000C9C E92D4000        STMFD            sp!, {lr}
+ 1028 00000CA0         ; if collision happens on enemy's offset, search next ch
+                       aracter
+ 1029 00000CA0 E59F01E0        LDR              r0, =enemyoffset
+ 1030 00000CA4 E5901000        LDR              r1, [r0]
+ 1031 00000CA8 E1550001        CMP              r5, r1
+ 1032 00000CAC 1A00000A        BNE              collision_no_on_1st_line
+ 1033 00000CB0         ;##############
+ 1034 00000CB0 E59F31D8        LDR              r3, =offset_hit_counts
+ 1035 00000CB4 E5934000        LDR              r4, [r3]
+ 1036 00000CB8         search_1_nextone
+ 1037 00000CB8 E2844001        ADD              r4, r4, #1
+ 1038 00000CBC E5F12001        LDRB             r2, [r1, #1]!
+ 1039 00000CC0 E352007C        CMP              r2, #0x7C
+ 1040 00000CC4 1AFFFFFF        BNE              not_all_died
+ 1041 00000CC8         
+ 1042 00000CC8         not_all_died
+ 1043 00000CC8 E352004F        CMP              r2, #0x4F
+ 1044 00000CCC 1AFFFFF9        BNE              search_1_nextone
+ 1045 00000CD0 E5801000        STR              r1, [r0]
+ 1046 00000CD4 E5834000        STR              r4, [r3]
+ 1047 00000CD8         ;##############
+ 1048 00000CD8 EA00003A        B                none_of_them_colliated
+ 1049 00000CDC         collision_no_on_1st_line
+ 1050 00000CDC         
+ 1051 00000CDC E59F019C        LDR              r0, =enemy2offset
+ 1052 00000CE0 E5901000        LDR              r1, [r0]
+ 1053 00000CE4 E1550001        CMP              r5, r1
+ 1054 00000CE8 1A00000A        BNE              collision_no_on_2nd_line
+ 1055 00000CEC E59F31A0        LDR              r3, =offset2_hit_counts
+ 1056 00000CF0 E5934000        LDR              r4, [r3]
+ 1057 00000CF4         
+ 1058 00000CF4         search_2_nextone
+ 1059 00000CF4 E2844001        ADD              r4, r4, #1
+ 1060 00000CF8 E5F12001        LDRB             r2, [r1, #1]!
+ 1061 00000CFC E352007C        CMP              r2, #0x7C
+ 1062 00000D00 1AFFFFFF        BNE              not_all_died_2
+ 1063 00000D04         not_all_died_2
+ 1064 00000D04 E352004D        CMP              r2, #0x4D
+ 1065 00000D08 1AFFFFF9        BNE              search_2_nextone
+ 1066 00000D0C E5801000        STR              r1, [r0]
+ 1067 00000D10 E5834000        STR              r4, [r3]
+ 1068 00000D14         ;##############
+ 1069 00000D14 EA00002B        B                none_of_them_colliated
+ 1070 00000D18         collision_no_on_2nd_line
+ 1071 00000D18         
+ 1072 00000D18 E59F0158        LDR              r0, =enemy3offset
+ 1073 00000D1C E5901000        LDR              r1, [r0]
+ 1074 00000D20 E1550001        CMP              r5, r1
+
+
+
+ARM Macro Assembler    Page 25 
+
+
+ 1075 00000D24 1A00000A        BNE              collision_no_on_3rd_line
+ 1076 00000D28 E59F3168        LDR              r3, =offset3_hit_counts
+ 1077 00000D2C E5934000        LDR              r4, [r3]
+ 1078 00000D30         
+ 1079 00000D30         search_3_nextone
+ 1080 00000D30 E2844001        ADD              r4, r4, #1
+ 1081 00000D34 E5F12001        LDRB             r2, [r1, #1]!
+ 1082 00000D38 E352007C        CMP              r2, #0x7C
+ 1083 00000D3C 1AFFFFFF        BNE              not_all_died_3
+ 1084 00000D40         ;??????????????????
+ 1085 00000D40         not_all_died_3
+ 1086 00000D40 E352004D        CMP              r2, #0x4D
+ 1087 00000D44 1AFFFFF9        BNE              search_3_nextone
+ 1088 00000D48 E5801000        STR              r1, [r0]
+ 1089 00000D4C E5834000        STR              r4, [r3]
+ 1090 00000D50         ;##############
+ 1091 00000D50 EA00001C        B                none_of_them_colliated
+ 1092 00000D54         collision_no_on_3rd_line
+ 1093 00000D54         
+ 1094 00000D54 E59F0114        LDR              r0, =enemy4offset
+ 1095 00000D58 E5901000        LDR              r1, [r0]
+ 1096 00000D5C E1550001        CMP              r5, r1
+ 1097 00000D60 1A00000A        BNE              collision_no_on_4th_line
+ 1098 00000D64 E59F3130        LDR              r3, =offset4_hit_counts
+ 1099 00000D68 E5934000        LDR              r4, [r3]
+ 1100 00000D6C         
+ 1101 00000D6C         search_4_nextone
+ 1102 00000D6C E2844001        ADD              r4, r4, #1
+ 1103 00000D70 E5F12001        LDRB             r2, [r1, #1]!
+ 1104 00000D74 E352007C        CMP              r2, #0x7C
+ 1105 00000D78 1AFFFFFF        BNE              not_all_died_4
+ 1106 00000D7C         ;??????????????????
+ 1107 00000D7C         not_all_died_4
+ 1108 00000D7C E3520057        CMP              r2, #0x57
+ 1109 00000D80 1AFFFFF9        BNE              search_4_nextone
+ 1110 00000D84 E5801000        STR              r1, [r0]
+ 1111 00000D88 E5834000        STR              r4, [r3]
+ 1112 00000D8C         ;##############
+ 1113 00000D8C EA00000D        B                none_of_them_colliated
+ 1114 00000D90         collision_no_on_4th_line
+ 1115 00000D90         
+ 1116 00000D90 E59F00D0        LDR              r0, =enemy5offset
+ 1117 00000D94 E5901000        LDR              r1, [r0]
+ 1118 00000D98 E1550001        CMP              r5, r1
+ 1119 00000D9C 1A000009        BNE              none_of_them_colliated
+ 1120 00000DA0 E59F30F8        LDR              r3, =offset5_hit_counts
+ 1121 00000DA4 E5934000        LDR              r4, [r3]
+ 1122 00000DA8         
+ 1123 00000DA8         search_5_nextone
+ 1124 00000DA8 E2844001        ADD              r4, r4, #1
+ 1125 00000DAC E5F12001        LDRB             r2, [r1, #1]!
+ 1126 00000DB0 E352007C        CMP              r2, #0x7C
+ 1127 00000DB4 1AFFFFFF        BNE              not_all_died_5
+ 1128 00000DB8         ;??????????????????
+ 1129 00000DB8         not_all_died_5
+ 1130 00000DB8 E3520057        CMP              r2, #0x57
+ 1131 00000DBC 1AFFFFF9        BNE              search_5_nextone
+ 1132 00000DC0 E5801000        STR              r1, [r0]
+ 1133 00000DC4 E5834000        STR              r4, [r3]
+
+
+
+ARM Macro Assembler    Page 26 
+
+
+ 1134 00000DC8         ;#############
+ 1135 00000DC8         
+ 1136 00000DC8         none_of_them_colliated
+ 1137 00000DC8 E8BD4000        LDMFD            sp!, {lr}
+ 1138 00000DCC E12FFF1E        BX               lr
+ 1139 00000DD0         
+ 1140 00000DD0                 END
+              40007410 
+              40007420 
+              40007430 
+              40007440 
+              40006000 
+              40007400 
+              40007100 
+              40006904 
+              40006908 
+              4000690C 
+              40007E2C 
+              E0004008 
+              40007990 
+              40007994 
+              40007544 
+              40006938 
+              40006934 
+              40006900 
+              40006930 
+              400078A0 
+              40007270 
+              40007280 
+              40007290 
+              400072A0 
+              400072B0 
+              E0004004 
+              E0008004 
+              40000200 
+              4000692C 
+              40007E20 
+              40006928 
+              40006924 
+              40006920 
+              40005000 
+              40007E28 
+              4000694C 
+              40006948 
+              40006944 
+              40007160 
+              400073B0 
+              40007150 
+              400073A0 
+              40007140 
+              40007390 
+              40007130 
+              40007380 
+              40007120 
+              40007370 
+              40007500 
+              40007510 
+              40007520 
+              40007530 
+
+
+
+ARM Macro Assembler    Page 27 
+
+
+              40007540 
+Command Line: --debug --xref --diag_suppress=9931 --apcs=interwork --depend=.\o
+bjects\projectiles.d -o.\objects\projectiles.o -IC:\Keil_v5\ARM\RV31\INC -IC:\K
+eil_v5\ARM\CMSIS\Include -IC:\Keil_v5\ARM\Inc\Philips --predefine="__EVAL SETA 
+1" --predefine="__UVISION_VERSION SETA 518" --list=.\listings\projectiles.lst p
+rojectiles.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+GPIO 00000000
+
+Symbol: GPIO
+   Definitions
+      At line 1 in file projectiles.s
+   Uses
+      None
+Comment: GPIO unused
+collision_no_on_1st_line 00000CDC
+
+Symbol: collision_no_on_1st_line
+   Definitions
+      At line 1049 in file projectiles.s
+   Uses
+      At line 1032 in file projectiles.s
+Comment: collision_no_on_1st_line used once
+collision_no_on_2nd_line 00000D18
+
+Symbol: collision_no_on_2nd_line
+   Definitions
+      At line 1070 in file projectiles.s
+   Uses
+      At line 1054 in file projectiles.s
+Comment: collision_no_on_2nd_line used once
+collision_no_on_3rd_line 00000D54
+
+Symbol: collision_no_on_3rd_line
+   Definitions
+      At line 1092 in file projectiles.s
+   Uses
+      At line 1075 in file projectiles.s
+Comment: collision_no_on_3rd_line used once
+collision_no_on_4th_line 00000D90
+
+Symbol: collision_no_on_4th_line
+   Definitions
+      At line 1114 in file projectiles.s
+   Uses
+      At line 1097 in file projectiles.s
+Comment: collision_no_on_4th_line used once
+continue_subb2 00000588
+
+Symbol: continue_subb2
+   Definitions
+      At line 413 in file projectiles.s
+   Uses
+      At line 417 in file projectiles.s
+Comment: continue_subb2 used once
+continue_subb22 00000614
+
+Symbol: continue_subb22
+   Definitions
+      At line 456 in file projectiles.s
+   Uses
+      At line 460 in file projectiles.s
+Comment: continue_subb22 used once
+continue_subb222 000006BC
+
+Symbol: continue_subb222
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Relocatable symbols
+
+   Definitions
+      At line 508 in file projectiles.s
+   Uses
+      At line 512 in file projectiles.s
+Comment: continue_subb222 used once
+didnt_find_next_rightmost 00000BB8
+
+Symbol: didnt_find_next_rightmost
+   Definitions
+      At line 943 in file projectiles.s
+   Uses
+      At line 953 in file projectiles.s
+Comment: didnt_find_next_rightmost used once
+didnt_find_next_rightmost2 00000B5C
+
+Symbol: didnt_find_next_rightmost2
+   Definitions
+      At line 915 in file projectiles.s
+   Uses
+      At line 925 in file projectiles.s
+Comment: didnt_find_next_rightmost2 used once
+didnt_find_next_rightmost3 00000B00
+
+Symbol: didnt_find_next_rightmost3
+   Definitions
+      At line 885 in file projectiles.s
+   Uses
+      At line 895 in file projectiles.s
+Comment: didnt_find_next_rightmost3 used once
+didnt_find_next_rightmost4 00000AA4
+
+Symbol: didnt_find_next_rightmost4
+   Definitions
+      At line 855 in file projectiles.s
+   Uses
+      At line 865 in file projectiles.s
+Comment: didnt_find_next_rightmost4 used once
+didnt_find_next_rightmost5 00000A4C
+
+Symbol: didnt_find_next_rightmost5
+   Definitions
+      At line 825 in file projectiles.s
+   Uses
+      At line 835 in file projectiles.s
+Comment: didnt_find_next_rightmost5 used once
+done_adding_score 00000748
+
+Symbol: done_adding_score
+   Definitions
+      At line 555 in file projectiles.s
+   Uses
+      At line 325 in file projectiles.s
+      At line 354 in file projectiles.s
+      At line 384 in file projectiles.s
+
+done_adding_score_after_x 00000A18
+
+Symbol: done_adding_score_after_x
+   Definitions
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 805 in file projectiles.s
+   Uses
+      At line 553 in file projectiles.s
+Comment: done_adding_score_after_x used once
+done_diving2 00000598
+
+Symbol: done_diving2
+   Definitions
+      At line 418 in file projectiles.s
+   Uses
+      At line 415 in file projectiles.s
+Comment: done_diving2 used once
+done_diving22 00000624
+
+Symbol: done_diving22
+   Definitions
+      At line 461 in file projectiles.s
+   Uses
+      At line 458 in file projectiles.s
+Comment: done_diving22 used once
+done_diving222 000006CC
+
+Symbol: done_diving222
+   Definitions
+      At line 513 in file projectiles.s
+   Uses
+      At line 510 in file projectiles.s
+Comment: done_diving222 used once
+done_end 000003C8
+
+Symbol: done_end
+   Definitions
+      At line 277 in file projectiles.s
+   Uses
+      At line 156 in file projectiles.s
+      At line 196 in file projectiles.s
+      At line 217 in file projectiles.s
+      At line 226 in file projectiles.s
+      At line 232 in file projectiles.s
+      At line 265 in file projectiles.s
+      At line 273 in file projectiles.s
+
+done_once 00000348
+
+Symbol: done_once
+   Definitions
+      At line 233 in file projectiles.s
+   Uses
+      At line 214 in file projectiles.s
+Comment: done_once used once
+done_once_Ss 000003C8
+
+Symbol: done_once_Ss
+   Definitions
+      At line 275 in file projectiles.s
+   Uses
+      None
+Comment: done_once_Ss unused
+done_reducing_enemy_right_counts 00000BE8
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+Relocatable symbols
+
+
+Symbol: done_reducing_enemy_right_counts
+   Definitions
+      At line 961 in file projectiles.s
+   Uses
+      At line 838 in file projectiles.s
+      At line 868 in file projectiles.s
+      At line 898 in file projectiles.s
+      At line 928 in file projectiles.s
+      At line 956 in file projectiles.s
+
+done_subtracting 00000C94
+
+Symbol: done_subtracting
+   Definitions
+      At line 1021 in file projectiles.s
+   Uses
+      At line 977 in file projectiles.s
+      At line 989 in file projectiles.s
+      At line 1001 in file projectiles.s
+      At line 1013 in file projectiles.s
+
+done_with_reduce 000002EC
+
+Symbol: done_with_reduce
+   Definitions
+      At line 206 in file projectiles.s
+   Uses
+      At line 202 in file projectiles.s
+Comment: done_with_reduce used once
+dont_care_anymore 000003F8
+
+Symbol: dont_care_anymore
+   Definitions
+      At line 295 in file projectiles.s
+   Uses
+      At line 292 in file projectiles.s
+Comment: dont_care_anymore used once
+dont_clear_its_not 0000076C
+
+Symbol: dont_clear_its_not
+   Definitions
+      At line 569 in file projectiles.s
+   Uses
+      At line 567 in file projectiles.s
+Comment: dont_clear_its_not used once
+eject_proj 000001E8
+
+Symbol: eject_proj
+   Definitions
+      At line 123 in file projectiles.s
+   Uses
+      At line 10 in file projectiles.s
+Comment: eject_proj used once
+enemyoffset_hitted 00000C9C
+
+Symbol: enemyoffset_hitted
+   Definitions
+      At line 1026 in file projectiles.s
+
+
+
+ARM Macro Assembler    Page 5 Alphabetic symbol ordering
+Relocatable symbols
+
+   Uses
+      At line 559 in file projectiles.s
+Comment: enemyoffset_hitted used once
+found_the_next_rightmost 00000BE0
+
+Symbol: found_the_next_rightmost
+   Definitions
+      At line 954 in file projectiles.s
+   Uses
+      At line 946 in file projectiles.s
+      At line 951 in file projectiles.s
+
+found_the_next_rightmost2 00000B84
+
+Symbol: found_the_next_rightmost2
+   Definitions
+      At line 926 in file projectiles.s
+   Uses
+      At line 918 in file projectiles.s
+      At line 923 in file projectiles.s
+
+found_the_next_rightmost3 00000B28
+
+Symbol: found_the_next_rightmost3
+   Definitions
+      At line 896 in file projectiles.s
+   Uses
+      At line 888 in file projectiles.s
+      At line 893 in file projectiles.s
+
+found_the_next_rightmost4 00000ACC
+
+Symbol: found_the_next_rightmost4
+   Definitions
+      At line 866 in file projectiles.s
+   Uses
+      At line 858 in file projectiles.s
+      At line 863 in file projectiles.s
+
+found_the_next_rightmost5 00000A74
+
+Symbol: found_the_next_rightmost5
+   Definitions
+      At line 836 in file projectiles.s
+   Uses
+      At line 828 in file projectiles.s
+      At line 833 in file projectiles.s
+
+game_not_advance_yet 00000A18
+
+Symbol: game_not_advance_yet
+   Definitions
+      At line 806 in file projectiles.s
+   Uses
+      At line 581 in file projectiles.s
+      At line 586 in file projectiles.s
+      At line 591 in file projectiles.s
+      At line 596 in file projectiles.s
+      At line 601 in file projectiles.s
+
+
+
+ARM Macro Assembler    Page 6 Alphabetic symbol ordering
+Relocatable symbols
+
+
+its_OMW 0000030C
+
+Symbol: its_OMW
+   Definitions
+      At line 215 in file projectiles.s
+   Uses
+      At line 175 in file projectiles.s
+      At line 177 in file projectiles.s
+      At line 179 in file projectiles.s
+      At line 185 in file projectiles.s
+
+its_Ss 000002D0
+
+Symbol: its_Ss
+   Definitions
+      At line 197 in file projectiles.s
+   Uses
+      At line 169 in file projectiles.s
+      At line 172 in file projectiles.s
+
+its_end 00000314
+
+Symbol: its_end
+   Definitions
+      At line 218 in file projectiles.s
+   Uses
+      At line 181 in file projectiles.s
+Comment: its_end used once
+its_enemy_proj 00000334
+
+Symbol: its_enemy_proj
+   Definitions
+      At line 227 in file projectiles.s
+   Uses
+      At line 183 in file projectiles.s
+Comment: its_enemy_proj used once
+its_least_then_1000_1 00000720
+
+Symbol: its_least_then_1000_1
+   Definitions
+      At line 537 in file projectiles.s
+   Uses
+      At line 531 in file projectiles.s
+Comment: its_least_then_1000_1 used once
+its_least_then_100_1 00000724
+
+Symbol: its_least_then_100_1
+   Definitions
+      At line 539 in file projectiles.s
+   Uses
+      At line 525 in file projectiles.s
+Comment: its_least_then_100_1 used once
+its_least_then_100_10 00000664
+
+Symbol: its_least_then_100_10
+   Definitions
+      At line 479 in file projectiles.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 7 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 473 in file projectiles.s
+Comment: its_least_then_100_10 used once
+its_least_then_10_1 00000728
+
+Symbol: its_least_then_10_1
+   Definitions
+      At line 541 in file projectiles.s
+   Uses
+      At line 519 in file projectiles.s
+Comment: its_least_then_10_1 used once
+its_least_then_10_10 00000668
+
+Symbol: its_least_then_10_10
+   Definitions
+      At line 481 in file projectiles.s
+   Uses
+      At line 467 in file projectiles.s
+Comment: its_least_then_10_10 used once
+its_least_then_10_100 000005C0
+
+Symbol: its_least_then_10_100
+   Definitions
+      At line 430 in file projectiles.s
+   Uses
+      At line 424 in file projectiles.s
+Comment: its_least_then_10_100 used once
+its_normal 00000454
+
+Symbol: its_normal
+   Definitions
+      At line 322 in file projectiles.s
+   Uses
+      At line 306 in file projectiles.s
+Comment: its_normal used once
+its_normal_1 000004B8
+
+Symbol: its_normal_1
+   Definitions
+      At line 351 in file projectiles.s
+   Uses
+      At line 336 in file projectiles.s
+Comment: its_normal_1 used once
+its_normal_1_2 000004B0
+
+Symbol: its_normal_1_2
+   Definitions
+      At line 348 in file projectiles.s
+   Uses
+      At line 342 in file projectiles.s
+Comment: its_normal_1_2 used once
+its_normal_2 0000051C
+
+Symbol: its_normal_2
+   Definitions
+      At line 381 in file projectiles.s
+   Uses
+      At line 366 in file projectiles.s
+Comment: its_normal_2 used once
+its_normal_2_2 00000514
+
+
+
+ARM Macro Assembler    Page 8 Alphabetic symbol ordering
+Relocatable symbols
+
+
+Symbol: its_normal_2_2
+   Definitions
+      At line 378 in file projectiles.s
+   Uses
+      At line 372 in file projectiles.s
+Comment: its_normal_2_2 used once
+its_normal__2 0000044C
+
+Symbol: its_normal__2
+   Definitions
+      At line 319 in file projectiles.s
+   Uses
+      At line 312 in file projectiles.s
+Comment: its_normal__2 used once
+its_s 000002E4
+
+Symbol: its_s
+   Definitions
+      At line 203 in file projectiles.s
+   Uses
+      At line 199 in file projectiles.s
+Comment: its_s used once
+its_space 000002AC
+
+Symbol: its_space
+   Definitions
+      At line 187 in file projectiles.s
+   Uses
+      At line 166 in file projectiles.s
+Comment: its_space used once
+its_totally_fine 00000954
+
+Symbol: its_totally_fine
+   Definitions
+      At line 729 in file projectiles.s
+   Uses
+      At line 706 in file projectiles.s
+Comment: its_totally_fine used once
+its_totally_fine_2 000008CC
+
+Symbol: its_totally_fine_2
+   Definitions
+      At line 686 in file projectiles.s
+   Uses
+      At line 672 in file projectiles.s
+Comment: its_totally_fine_2 used once
+its_totally_fine_3 00000860
+
+Symbol: its_totally_fine_3
+   Definitions
+      At line 651 in file projectiles.s
+   Uses
+      At line 645 in file projectiles.s
+Comment: its_totally_fine_3 used once
+its_totally_fine_fine 00000950
+
+Symbol: its_totally_fine_fine
+   Definitions
+
+
+
+ARM Macro Assembler    Page 9 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 727 in file projectiles.s
+   Uses
+      At line 712 in file projectiles.s
+Comment: its_totally_fine_fine used once
+its_totally_fine_fine_2 000008C8
+
+Symbol: its_totally_fine_fine_2
+   Definitions
+      At line 684 in file projectiles.s
+   Uses
+      At line 678 in file projectiles.s
+Comment: its_totally_fine_fine_2 used once
+its_totally_fine_fine_fine 0000094C
+
+Symbol: its_totally_fine_fine_fine
+   Definitions
+      At line 725 in file projectiles.s
+   Uses
+      At line 718 in file projectiles.s
+Comment: its_totally_fine_fine_fine used once
+none_of_them_colliated 00000DC8
+
+Symbol: none_of_them_colliated
+   Definitions
+      At line 1136 in file projectiles.s
+   Uses
+      At line 1048 in file projectiles.s
+      At line 1069 in file projectiles.s
+      At line 1091 in file projectiles.s
+      At line 1113 in file projectiles.s
+      At line 1119 in file projectiles.s
+
+not_1th_right_enemy 00000BE8
+
+Symbol: not_1th_right_enemy
+   Definitions
+      At line 959 in file projectiles.s
+   Uses
+      At line 939 in file projectiles.s
+Comment: not_1th_right_enemy used once
+not_2th_formation_next 00000C84
+
+Symbol: not_2th_formation_next
+   Definitions
+      At line 1014 in file projectiles.s
+   Uses
+      At line 1007 in file projectiles.s
+Comment: not_2th_formation_next used once
+not_2th_right_enemy 00000B8C
+
+Symbol: not_2th_right_enemy
+   Definitions
+      At line 930 in file projectiles.s
+   Uses
+      At line 911 in file projectiles.s
+Comment: not_2th_right_enemy used once
+not_3th_formation_next 00000C60
+
+Symbol: not_3th_formation_next
+
+
+
+ARM Macro Assembler    Page 10 Alphabetic symbol ordering
+Relocatable symbols
+
+   Definitions
+      At line 1002 in file projectiles.s
+   Uses
+      At line 995 in file projectiles.s
+Comment: not_3th_formation_next used once
+not_3th_right_enemy 00000B30
+
+Symbol: not_3th_right_enemy
+   Definitions
+      At line 901 in file projectiles.s
+   Uses
+      At line 881 in file projectiles.s
+Comment: not_3th_right_enemy used once
+not_4th_formation_next 00000C3C
+
+Symbol: not_4th_formation_next
+   Definitions
+      At line 990 in file projectiles.s
+   Uses
+      At line 983 in file projectiles.s
+Comment: not_4th_formation_next used once
+not_4th_right_enemy 00000AD4
+
+Symbol: not_4th_right_enemy
+   Definitions
+      At line 871 in file projectiles.s
+   Uses
+      At line 851 in file projectiles.s
+Comment: not_4th_right_enemy used once
+not_5th_formation_next 00000C18
+
+Symbol: not_5th_formation_next
+   Definitions
+      At line 978 in file projectiles.s
+   Uses
+      At line 971 in file projectiles.s
+Comment: not_5th_formation_next used once
+not_5th_right_enemy 00000A7C
+
+Symbol: not_5th_right_enemy
+   Definitions
+      At line 841 in file projectiles.s
+   Uses
+      At line 822 in file projectiles.s
+Comment: not_5th_right_enemy used once
+not_M_score 000004C4
+
+Symbol: not_M_score
+   Definitions
+      At line 356 in file projectiles.s
+   Uses
+      At line 330 in file projectiles.s
+Comment: not_M_score used once
+not_O_score 00000460
+
+Symbol: not_O_score
+   Definitions
+      At line 327 in file projectiles.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 11 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 300 in file projectiles.s
+Comment: not_O_score used once
+not_Ss 00000394
+
+Symbol: not_Ss
+   Definitions
+      At line 255 in file projectiles.s
+   Uses
+      At line 247 in file projectiles.s
+Comment: not_Ss used once
+not_Sss 000003B0
+
+Symbol: not_Sss
+   Definitions
+      At line 264 in file projectiles.s
+   Uses
+      At line 238 in file projectiles.s
+      At line 240 in file projectiles.s
+      At line 254 in file projectiles.s
+      At line 259 in file projectiles.s
+
+not_W_score 00000528
+
+Symbol: not_W_score
+   Definitions
+      At line 386 in file projectiles.s
+   Uses
+      At line 360 in file projectiles.s
+Comment: not_W_score used once
+not_all_died 00000CC8
+
+Symbol: not_all_died
+   Definitions
+      At line 1042 in file projectiles.s
+   Uses
+      At line 1040 in file projectiles.s
+Comment: not_all_died used once
+not_all_died_2 00000D04
+
+Symbol: not_all_died_2
+   Definitions
+      At line 1063 in file projectiles.s
+   Uses
+      At line 1062 in file projectiles.s
+Comment: not_all_died_2 used once
+not_all_died_3 00000D40
+
+Symbol: not_all_died_3
+   Definitions
+      At line 1085 in file projectiles.s
+   Uses
+      At line 1083 in file projectiles.s
+Comment: not_all_died_3 used once
+not_all_died_4 00000D7C
+
+Symbol: not_all_died_4
+   Definitions
+      At line 1107 in file projectiles.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 12 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 1105 in file projectiles.s
+Comment: not_all_died_4 used once
+not_all_died_5 00000DB8
+
+Symbol: not_all_died_5
+   Definitions
+      At line 1129 in file projectiles.s
+   Uses
+      At line 1127 in file projectiles.s
+Comment: not_all_died_5 used once
+not_x_score 00000748
+
+Symbol: not_x_score
+   Definitions
+      At line 554 in file projectiles.s
+   Uses
+      At line 390 in file projectiles.s
+Comment: not_x_score used once
+one_barrier_case 000003B4
+
+Symbol: one_barrier_case
+   Definitions
+      At line 267 in file projectiles.s
+   Uses
+      At line 242 in file projectiles.s
+Comment: one_barrier_case used once
+proj_hits_enemy 000003D0
+
+Symbol: proj_hits_enemy
+   Definitions
+      At line 283 in file projectiles.s
+   Uses
+      At line 154 in file projectiles.s
+      At line 216 in file projectiles.s
+
+proj_motion 00000224
+
+Symbol: proj_motion
+   Definitions
+      At line 142 in file projectiles.s
+   Uses
+      At line 11 in file projectiles.s
+Comment: proj_motion used once
+proj_setups 000001AC
+
+Symbol: proj_setups
+   Definitions
+      At line 99 in file projectiles.s
+   Uses
+      At line 9 in file projectiles.s
+Comment: proj_setups used once
+prompt 00000000
+
+Symbol: prompt
+   Definitions
+      At line 96 in file projectiles.s
+   Uses
+      None
+Comment: prompt unused
+
+
+
+ARM Macro Assembler    Page 13 Alphabetic symbol ordering
+Relocatable symbols
+
+reducing_enemy_counts 00000BF0
+
+Symbol: reducing_enemy_counts
+   Definitions
+      At line 965 in file projectiles.s
+   Uses
+      At line 558 in file projectiles.s
+Comment: reducing_enemy_counts used once
+reducing_enemy_right_counts 00000A20
+
+Symbol: reducing_enemy_right_counts
+   Definitions
+      At line 811 in file projectiles.s
+   Uses
+      At line 557 in file projectiles.s
+Comment: reducing_enemy_right_counts used once
+safe_skip 00000254
+
+Symbol: safe_skip
+   Definitions
+      At line 157 in file projectiles.s
+   Uses
+      At line 149 in file projectiles.s
+      At line 151 in file projectiles.s
+
+search_1_nextone 00000CB8
+
+Symbol: search_1_nextone
+   Definitions
+      At line 1036 in file projectiles.s
+   Uses
+      At line 1044 in file projectiles.s
+Comment: search_1_nextone used once
+search_2_nextone 00000CF4
+
+Symbol: search_2_nextone
+   Definitions
+      At line 1058 in file projectiles.s
+   Uses
+      At line 1065 in file projectiles.s
+Comment: search_2_nextone used once
+search_3_nextone 00000D30
+
+Symbol: search_3_nextone
+   Definitions
+      At line 1079 in file projectiles.s
+   Uses
+      At line 1087 in file projectiles.s
+Comment: search_3_nextone used once
+search_4_nextone 00000D6C
+
+Symbol: search_4_nextone
+   Definitions
+      At line 1101 in file projectiles.s
+   Uses
+      At line 1109 in file projectiles.s
+Comment: search_4_nextone used once
+search_5_nextone 00000DA8
+
+
+
+
+ARM Macro Assembler    Page 14 Alphabetic symbol ordering
+Relocatable symbols
+
+Symbol: search_5_nextone
+   Definitions
+      At line 1123 in file projectiles.s
+   Uses
+      At line 1131 in file projectiles.s
+Comment: search_5_nextone used once
+92 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Absolute symbols
+
+Ss2_storing_address 40007430
+
+Symbol: Ss2_storing_address
+   Definitions
+      At line 40 in file projectiles.s
+   Uses
+      At line 110 in file projectiles.s
+      At line 256 in file projectiles.s
+
+Ss_storing_address 40007420
+
+Symbol: Ss_storing_address
+   Definitions
+      At line 39 in file projectiles.s
+   Uses
+      At line 105 in file projectiles.s
+      At line 244 in file projectiles.s
+      At line 268 in file projectiles.s
+
+T0MCR E0004014
+
+Symbol: T0MCR
+   Definitions
+      At line 23 in file projectiles.s
+   Uses
+      None
+Comment: T0MCR unused
+T0TC E0004008
+
+Symbol: T0TC
+   Definitions
+      At line 26 in file projectiles.s
+   Uses
+      At line 397 in file projectiles.s
+      At line 440 in file projectiles.s
+      At line 492 in file projectiles.s
+
+T0TCR E0004004
+
+Symbol: T0TCR
+   Definitions
+      At line 22 in file projectiles.s
+   Uses
+      At line 605 in file projectiles.s
+Comment: T0TCR used once
+T1MCR E0008014
+
+Symbol: T1MCR
+   Definitions
+      At line 25 in file projectiles.s
+   Uses
+      None
+Comment: T1MCR unused
+T1TCR E0008004
+
+Symbol: T1TCR
+   Definitions
+      At line 24 in file projectiles.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Absolute symbols
+
+      At line 610 in file projectiles.s
+Comment: T1TCR used once
+UART0 E000C004
+
+Symbol: UART0
+   Definitions
+      At line 21 in file projectiles.s
+   Uses
+      None
+Comment: UART0 unused
+current_keyboard_rng_input 40007994
+
+Symbol: current_keyboard_rng_input
+   Definitions
+      At line 88 in file projectiles.s
+   Uses
+      At line 404 in file projectiles.s
+      At line 447 in file projectiles.s
+      At line 499 in file projectiles.s
+
+current_level 40000200
+
+Symbol: current_level
+   Definitions
+      At line 60 in file projectiles.s
+   Uses
+      At line 616 in file projectiles.s
+Comment: current_level used once
+current_score_1 40006900
+
+Symbol: current_score_1
+   Definitions
+      At line 45 in file projectiles.s
+   Uses
+      At line 515 in file projectiles.s
+      At line 699 in file projectiles.s
+
+current_score_10 40006904
+
+Symbol: current_score_10
+   Definitions
+      At line 46 in file projectiles.s
+   Uses
+      At line 301 in file projectiles.s
+      At line 323 in file projectiles.s
+      At line 331 in file projectiles.s
+      At line 352 in file projectiles.s
+      At line 361 in file projectiles.s
+      At line 382 in file projectiles.s
+      At line 463 in file projectiles.s
+      At line 521 in file projectiles.s
+      At line 665 in file projectiles.s
+
+current_score_100 40006908
+
+Symbol: current_score_100
+   Definitions
+      At line 47 in file projectiles.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Absolute symbols
+
+      At line 308 in file projectiles.s
+      At line 320 in file projectiles.s
+      At line 338 in file projectiles.s
+      At line 349 in file projectiles.s
+      At line 368 in file projectiles.s
+      At line 379 in file projectiles.s
+      At line 420 in file projectiles.s
+      At line 469 in file projectiles.s
+      At line 527 in file projectiles.s
+      At line 638 in file projectiles.s
+
+current_score_1000 4000690C
+
+Symbol: current_score_1000
+   Definitions
+      At line 48 in file projectiles.s
+   Uses
+      At line 314 in file projectiles.s
+      At line 344 in file projectiles.s
+      At line 374 in file projectiles.s
+      At line 426 in file projectiles.s
+      At line 475 in file projectiles.s
+      At line 532 in file projectiles.s
+      At line 622 in file projectiles.s
+
+endpoint_location 40006940
+
+Symbol: endpoint_location
+   Definitions
+      At line 61 in file projectiles.s
+   Uses
+      None
+Comment: endpoint_location unused
+enemy2counts 40007280
+
+Symbol: enemy2counts
+   Definitions
+      At line 70 in file projectiles.s
+   Uses
+      At line 583 in file projectiles.s
+      At line 1009 in file projectiles.s
+
+enemy2offset 40007130
+
+Symbol: enemy2offset
+   Definitions
+      At line 64 in file projectiles.s
+   Uses
+      At line 903 in file projectiles.s
+      At line 1004 in file projectiles.s
+      At line 1051 in file projectiles.s
+
+enemy3counts 40007290
+
+Symbol: enemy3counts
+   Definitions
+      At line 71 in file projectiles.s
+   Uses
+      At line 588 in file projectiles.s
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+Absolute symbols
+
+      At line 997 in file projectiles.s
+
+enemy3offset 40007140
+
+Symbol: enemy3offset
+   Definitions
+      At line 65 in file projectiles.s
+   Uses
+      At line 873 in file projectiles.s
+      At line 992 in file projectiles.s
+      At line 1072 in file projectiles.s
+
+enemy4counts 400072A0
+
+Symbol: enemy4counts
+   Definitions
+      At line 72 in file projectiles.s
+   Uses
+      At line 593 in file projectiles.s
+      At line 985 in file projectiles.s
+
+enemy4offset 40007150
+
+Symbol: enemy4offset
+   Definitions
+      At line 66 in file projectiles.s
+   Uses
+      At line 843 in file projectiles.s
+      At line 980 in file projectiles.s
+      At line 1094 in file projectiles.s
+
+enemy5counts 400072B0
+
+Symbol: enemy5counts
+   Definitions
+      At line 73 in file projectiles.s
+   Uses
+      At line 598 in file projectiles.s
+      At line 973 in file projectiles.s
+
+enemy5offset 40007160
+
+Symbol: enemy5offset
+   Definitions
+      At line 67 in file projectiles.s
+   Uses
+      At line 814 in file projectiles.s
+      At line 968 in file projectiles.s
+      At line 1116 in file projectiles.s
+
+enemy_proj_offset 40007450
+
+Symbol: enemy_proj_offset
+   Definitions
+      At line 42 in file projectiles.s
+   Uses
+      None
+Comment: enemy_proj_offset unused
+enemycounts 40007270
+
+
+
+ARM Macro Assembler    Page 5 Alphabetic symbol ordering
+Absolute symbols
+
+
+Symbol: enemycounts
+   Definitions
+      At line 69 in file projectiles.s
+   Uses
+      At line 578 in file projectiles.s
+      At line 1016 in file projectiles.s
+
+enemyoffset 40007120
+
+Symbol: enemyoffset
+   Definitions
+      At line 63 in file projectiles.s
+   Uses
+      At line 931 in file projectiles.s
+      At line 1029 in file projectiles.s
+
+keystork_rng_counter 40007990
+
+Symbol: keystork_rng_counter
+   Definitions
+      At line 87 in file projectiles.s
+   Uses
+      At line 401 in file projectiles.s
+      At line 444 in file projectiles.s
+      At line 496 in file projectiles.s
+
+lives 40005000
+
+Symbol: lives
+   Definitions
+      At line 20 in file projectiles.s
+   Uses
+      At line 747 in file projectiles.s
+Comment: lives used once
+mothership_appears_count 40007E28
+
+Symbol: mothership_appears_count
+   Definitions
+      At line 92 in file projectiles.s
+   Uses
+      At line 767 in file projectiles.s
+Comment: mothership_appears_count used once
+mothership_appears_hit 40007E2C
+
+Symbol: mothership_appears_hit
+   Definitions
+      At line 93 in file projectiles.s
+   Uses
+      At line 392 in file projectiles.s
+      At line 759 in file projectiles.s
+
+mothership_exist_on_board 400078A0
+
+Symbol: mothership_exist_on_board
+   Definitions
+      At line 34 in file projectiles.s
+   Uses
+      At line 548 in file projectiles.s
+
+
+
+ARM Macro Assembler    Page 6 Alphabetic symbol ordering
+Absolute symbols
+
+Comment: mothership_exist_on_board used once
+mothership_score_1 40006930
+
+Symbol: mothership_score_1
+   Definitions
+      At line 29 in file projectiles.s
+   Uses
+      At line 546 in file projectiles.s
+Comment: mothership_score_1 used once
+mothership_score_10 40006934
+
+Symbol: mothership_score_10
+   Definitions
+      At line 30 in file projectiles.s
+   Uses
+      At line 485 in file projectiles.s
+Comment: mothership_score_10 used once
+mothership_score_100 40006938
+
+Symbol: mothership_score_100
+   Definitions
+      At line 31 in file projectiles.s
+   Uses
+      At line 435 in file projectiles.s
+Comment: mothership_score_100 used once
+number_of_loops 40007544
+
+Symbol: number_of_loops
+   Definitions
+      At line 27 in file projectiles.s
+   Uses
+      At line 409 in file projectiles.s
+      At line 452 in file projectiles.s
+      At line 504 in file projectiles.s
+
+offset2_hit_counts 40007510
+
+Symbol: offset2_hit_counts
+   Definitions
+      At line 82 in file projectiles.s
+   Uses
+      At line 1055 in file projectiles.s
+Comment: offset2_hit_counts used once
+offset3_hit_counts 40007520
+
+Symbol: offset3_hit_counts
+   Definitions
+      At line 83 in file projectiles.s
+   Uses
+      At line 1076 in file projectiles.s
+Comment: offset3_hit_counts used once
+offset4_hit_counts 40007530
+
+Symbol: offset4_hit_counts
+   Definitions
+      At line 84 in file projectiles.s
+   Uses
+      At line 1098 in file projectiles.s
+Comment: offset4_hit_counts used once
+
+
+
+ARM Macro Assembler    Page 7 Alphabetic symbol ordering
+Absolute symbols
+
+offset5_hit_counts 40007540
+
+Symbol: offset5_hit_counts
+   Definitions
+      At line 85 in file projectiles.s
+   Uses
+      At line 1120 in file projectiles.s
+Comment: offset5_hit_counts used once
+offset_hit_counts 40007500
+
+Symbol: offset_hit_counts
+   Definitions
+      At line 81 in file projectiles.s
+   Uses
+      At line 1034 in file projectiles.s
+Comment: offset_hit_counts used once
+paused_game_flag 40005010
+
+Symbol: paused_game_flag
+   Definitions
+      At line 89 in file projectiles.s
+   Uses
+      None
+Comment: paused_game_flag unused
+proj_exist_on_board_flag 40007410
+
+Symbol: proj_exist_on_board_flag
+   Definitions
+      At line 38 in file projectiles.s
+   Uses
+      At line 101 in file projectiles.s
+      At line 136 in file projectiles.s
+      At line 211 in file projectiles.s
+      At line 223 in file projectiles.s
+      At line 571 in file projectiles.s
+
+proj_offset 40007400
+
+Symbol: proj_offset
+   Definitions
+      At line 36 in file projectiles.s
+   Uses
+      At line 128 in file projectiles.s
+      At line 131 in file projectiles.s
+      At line 145 in file projectiles.s
+      At line 188 in file projectiles.s
+      At line 207 in file projectiles.s
+      At line 219 in file projectiles.s
+      At line 228 in file projectiles.s
+      At line 234 in file projectiles.s
+      At line 249 in file projectiles.s
+      At line 261 in file projectiles.s
+      At line 271 in file projectiles.s
+      At line 287 in file projectiles.s
+
+prompt_storage_offset 40007E20
+
+Symbol: prompt_storage_offset
+   Definitions
+
+
+
+ARM Macro Assembler    Page 8 Alphabetic symbol ordering
+Absolute symbols
+
+      At line 90 in file projectiles.s
+   Uses
+      At line 628 in file projectiles.s
+      At line 655 in file projectiles.s
+      At line 689 in file projectiles.s
+      At line 735 in file projectiles.s
+      At line 750 in file projectiles.s
+      At line 761 in file projectiles.s
+      At line 769 in file projectiles.s
+      At line 781 in file projectiles.s
+      At line 788 in file projectiles.s
+      At line 795 in file projectiles.s
+
+promptoffset 40007100
+
+Symbol: promptoffset
+   Definitions
+      At line 35 in file projectiles.s
+   Uses
+      At line 285 in file projectiles.s
+Comment: promptoffset used once
+right_enemy2counts 40007380
+
+Symbol: right_enemy2counts
+   Definitions
+      At line 76 in file projectiles.s
+   Uses
+      At line 905 in file projectiles.s
+      At line 912 in file projectiles.s
+      At line 916 in file projectiles.s
+
+right_enemy3counts 40007390
+
+Symbol: right_enemy3counts
+   Definitions
+      At line 77 in file projectiles.s
+   Uses
+      At line 875 in file projectiles.s
+      At line 882 in file projectiles.s
+      At line 886 in file projectiles.s
+
+right_enemy4counts 400073A0
+
+Symbol: right_enemy4counts
+   Definitions
+      At line 78 in file projectiles.s
+   Uses
+      At line 845 in file projectiles.s
+      At line 856 in file projectiles.s
+
+right_enemy5counts 400073B0
+
+Symbol: right_enemy5counts
+   Definitions
+      At line 79 in file projectiles.s
+   Uses
+      At line 816 in file projectiles.s
+      At line 826 in file projectiles.s
+
+
+
+
+ARM Macro Assembler    Page 9 Alphabetic symbol ordering
+Absolute symbols
+
+right_enemycounts 40007370
+
+Symbol: right_enemycounts
+   Definitions
+      At line 75 in file projectiles.s
+   Uses
+      At line 933 in file projectiles.s
+      At line 940 in file projectiles.s
+      At line 944 in file projectiles.s
+
+selected_enemy_that_shoot_proj 40007440
+
+Symbol: selected_enemy_that_shoot_proj
+   Definitions
+      At line 41 in file projectiles.s
+   Uses
+      At line 114 in file projectiles.s
+Comment: selected_enemy_that_shoot_proj used once
+ship_location 40006000
+
+Symbol: ship_location
+   Definitions
+      At line 37 in file projectiles.s
+   Uses
+      At line 125 in file projectiles.s
+Comment: ship_location used once
+time_left_1 40006944
+
+Symbol: time_left_1
+   Definitions
+      At line 55 in file projectiles.s
+   Uses
+      At line 793 in file projectiles.s
+Comment: time_left_1 used once
+time_left_10 40006948
+
+Symbol: time_left_10
+   Definitions
+      At line 56 in file projectiles.s
+   Uses
+      At line 786 in file projectiles.s
+Comment: time_left_10 used once
+time_left_100 4000694C
+
+Symbol: time_left_100
+   Definitions
+      At line 57 in file projectiles.s
+   Uses
+      At line 779 in file projectiles.s
+Comment: time_left_100 used once
+total_score 40006920
+
+Symbol: total_score
+   Definitions
+      At line 59 in file projectiles.s
+   Uses
+      None
+Comment: total_score unused
+total_score_1 40006920
+
+
+
+ARM Macro Assembler    Page 10 Alphabetic symbol ordering
+Absolute symbols
+
+
+Symbol: total_score_1
+   Definitions
+      At line 50 in file projectiles.s
+   Uses
+      At line 701 in file projectiles.s
+Comment: total_score_1 used once
+total_score_10 40006924
+
+Symbol: total_score_10
+   Definitions
+      At line 51 in file projectiles.s
+   Uses
+      At line 667 in file projectiles.s
+      At line 708 in file projectiles.s
+
+total_score_100 40006928
+
+Symbol: total_score_100
+   Definitions
+      At line 52 in file projectiles.s
+   Uses
+      At line 640 in file projectiles.s
+      At line 674 in file projectiles.s
+      At line 714 in file projectiles.s
+
+total_score_1000 4000692C
+
+Symbol: total_score_1000
+   Definitions
+      At line 53 in file projectiles.s
+   Uses
+      At line 624 in file projectiles.s
+      At line 647 in file projectiles.s
+      At line 680 in file projectiles.s
+      At line 720 in file projectiles.s
+
+60 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+External symbols
+
+FIQ_Handler 00000000
+
+Symbol: FIQ_Handler
+   Definitions
+      At line 4 in file projectiles.s
+   Uses
+      None
+Comment: FIQ_Handler unused
+end_of_code 00000000
+
+Symbol: end_of_code
+   Definitions
+      At line 5 in file projectiles.s
+   Uses
+      None
+Comment: end_of_code unused
+enemy_proj_setups 00000000
+
+Symbol: enemy_proj_setups
+   Definitions
+      At line 14 in file projectiles.s
+   Uses
+      None
+Comment: enemy_proj_setups unused
+enemy_setups 00000000
+
+Symbol: enemy_setups
+   Definitions
+      At line 15 in file projectiles.s
+   Uses
+      None
+Comment: enemy_setups unused
+interrupt_init 00000000
+
+Symbol: interrupt_init
+   Definitions
+      At line 19 in file projectiles.s
+   Uses
+      None
+Comment: interrupt_init unused
+lab7_restart 00000000
+
+Symbol: lab7_restart
+   Definitions
+      At line 13 in file projectiles.s
+   Uses
+      At line 803 in file projectiles.s
+Comment: lab7_restart used once
+mothership_setup 00000000
+
+Symbol: mothership_setup
+   Definitions
+      At line 17 in file projectiles.s
+   Uses
+      None
+Comment: mothership_setup unused
+newline 00000000
+
+Symbol: newline
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+External symbols
+
+   Definitions
+      At line 12 in file projectiles.s
+   Uses
+      None
+Comment: newline unused
+output_string 00000000
+
+Symbol: output_string
+   Definitions
+      At line 18 in file projectiles.s
+   Uses
+      None
+Comment: output_string unused
+rng 00000000
+
+Symbol: rng
+   Definitions
+      At line 6 in file projectiles.s
+   Uses
+      None
+Comment: rng unused
+ship_setups 00000000
+
+Symbol: ship_setups
+   Definitions
+      At line 16 in file projectiles.s
+   Uses
+      None
+Comment: ship_setups unused
+uart_init 00000000
+
+Symbol: uart_init
+   Definitions
+      At line 8 in file projectiles.s
+   Uses
+      None
+Comment: uart_init unused
+update_map 00000000
+
+Symbol: update_map
+   Definitions
+      At line 7 in file projectiles.s
+   Uses
+      None
+Comment: update_map unused
+13 symbols
+499 symbols in table

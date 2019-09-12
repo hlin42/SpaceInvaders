@@ -1,0 +1,1996 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000                 AREA             GPIO, CODE, READWRITE
+    2 00000000         
+    3 00000000                 EXPORT           enemy_setups
+    4 00000000                 EXPORT           enemy_motioning_right
+    5 00000000                 EXPORT           enemy_motioning_left
+    6 00000000                 EXTERN           FIQ_Handler
+    7 00000000                 EXTERN           update_map
+    8 00000000                 EXPORT           enemy_motion
+    9 00000000                 EXTERN           output_string
+   10 00000000                 EXTERN           newline
+   11 00000000         
+   12 00000000                 EXTERN           div_and_mod
+   13 00000000         
+   14 00000000         
+   15 00000000 40007120 
+                       enemyoffset
+                               EQU              0x40007120
+   16 00000000 40007130 
+                       enemy2offset
+                               EQU              0x40007130
+   17 00000000 40007140 
+                       enemy3offset
+                               EQU              0x40007140
+   18 00000000 40007150 
+                       enemy4offset
+                               EQU              0x40007150
+   19 00000000 40007160 
+                       enemy5offset
+                               EQU              0x40007160
+   20 00000000         
+   21 00000000 40007270 
+                       enemycounts
+                               EQU              0x40007270
+   22 00000000 40007280 
+                       enemy2counts
+                               EQU              0x40007280
+   23 00000000 40007290 
+                       enemy3counts
+                               EQU              0x40007290
+   24 00000000 400072A0 
+                       enemy4counts
+                               EQU              0x400072A0
+   25 00000000 400072B0 
+                       enemy5counts
+                               EQU              0x400072B0
+   26 00000000         
+   27 00000000 40007370 
+                       right_enemycounts
+                               EQU              0x40007370
+   28 00000000 40007380 
+                       right_enemy2counts
+                               EQU              0x40007380
+   29 00000000 40007390 
+                       right_enemy3counts
+                               EQU              0x40007390
+   30 00000000 400073A0 
+                       right_enemy4counts
+                               EQU              0x400073A0
+   31 00000000 400073B0 
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+                       right_enemy5counts
+                               EQU              0x400073B0
+   32 00000000         
+   33 00000000 40007500 
+                       offset_hit_counts
+                               EQU              0x40007500
+   34 00000000 40007510 
+                       offset2_hit_counts
+                               EQU              0x40007510
+   35 00000000 40007520 
+                       offset3_hit_counts
+                               EQU              0x40007520
+   36 00000000 40007530 
+                       offset4_hit_counts
+                               EQU              0x40007530
+   37 00000000 40007540 
+                       offset5_hit_counts
+                               EQU              0x40007540
+   38 00000000         
+   39 00000000 40007100 
+                       promptoffset
+                               EQU              0x40007100
+   40 00000000 400072F0 
+                       left_right_dir_flag
+                               EQU              0x400072F0
+   41 00000000 400077F0 
+                       address_of_5counts
+                               EQU              0x400077F0
+   42 00000000 4000700F 
+                       flagof_just_reached_left_wall
+                               EQU              0x4000700f
+   43 00000000         
+   44 00000000         enemy_setups
+   45 00000000 E92D4000        STMFD            sp!, {lr}
+   46 00000004 E59F07B0        LDR              r0, =address_of_5counts
+   47 00000008 E3A01000        MOV              r1, #0
+   48 0000000C E5801000        STR              r1, [r0]
+   49 00000010         
+   50 00000010 E59F07A8        LDR              r0, =flagof_just_reached_left_w
+all
+   51 00000014 E3A01000        MOV              r1, #0
+   52 00000018 E5801000        STR              r1, [r0]
+   53 0000001C         
+   54 0000001C E59F07A0        LDR              r0, =left_right_dir_flag
+   55 00000020 E3A01000        MOV              r1, #0
+   56 00000024 E5801000        STR              r1, [r0]    ; 0 means shifts ri
+                                                            ght
+   57 00000028         
+   58 00000028 E59F0798        LDR              r0, =promptoffset
+   59 0000002C E5901000        LDR              r1, [r0]
+   60 00000030 E281103B        ADD              r1, r1, #0x3B
+   61 00000034 E59F2790        LDR              r2, =enemyoffset ; location of 
+                                                            the first enemy 
+   62 00000038 E5821000        STR              r1, [r2]
+   63 0000003C E2811019        ADD              r1, r1, #0x19
+   64 00000040 E59F2788        LDR              r2, =enemy2offset
+   65 00000044 E5821000        STR              r1, [r2]
+   66 00000048 E2811019        ADD              r1, r1, #0x19
+   67 0000004C E59F2780        LDR              r2, =enemy3offset
+
+
+
+ARM Macro Assembler    Page 3 
+
+
+   68 00000050 E5821000        STR              r1, [r2]
+   69 00000054 E2811019        ADD              r1, r1, #0x19
+   70 00000058 E59F2778        LDR              r2, =enemy4offset
+   71 0000005C E5821000        STR              r1, [r2]
+   72 00000060 E2811019        ADD              r1, r1, #0x19
+   73 00000064 E59F2770        LDR              r2, =enemy5offset
+   74 00000068 E5821000        STR              r1, [r2]
+   75 0000006C         
+   76 0000006C E59F076C        LDR              r0, =enemycounts
+   77 00000070 E3A01007        MOV              r1, #7
+   78 00000074 E5801000        STR              r1, [r0]
+   79 00000078 E59F0764        LDR              r0, =enemy2counts
+   80 0000007C E5801000        STR              r1, [r0]
+   81 00000080 E59F0760        LDR              r0, =enemy3counts
+   82 00000084 E5801000        STR              r1, [r0]
+   83 00000088 E59F075C        LDR              r0, =enemy4counts
+   84 0000008C E5801000        STR              r1, [r0]
+   85 00000090 E59F0758        LDR              r0, =enemy5counts
+   86 00000094 E5801000        STR              r1, [r0]
+   87 00000098         
+   88 00000098 E59F0754        LDR              r0, =right_enemycounts
+   89 0000009C E3A01007        MOV              r1, #7
+   90 000000A0 E5801000        STR              r1, [r0]
+   91 000000A4 E59F074C        LDR              r0, =right_enemy2counts
+   92 000000A8 E5801000        STR              r1, [r0]
+   93 000000AC E59F0748        LDR              r0, =right_enemy3counts
+   94 000000B0 E5801000        STR              r1, [r0]
+   95 000000B4 E59F0744        LDR              r0, =right_enemy4counts
+   96 000000B8 E5801000        STR              r1, [r0]
+   97 000000BC E59F0740        LDR              r0, =right_enemy5counts
+   98 000000C0 E5801000        STR              r1, [r0]
+   99 000000C4         
+  100 000000C4 E59F073C        LDR              r0, =offset_hit_counts
+  101 000000C8 E3A01000        MOV              r1, #0
+  102 000000CC E5801000        STR              r1, [r0]
+  103 000000D0 E59F0734        LDR              r0, =offset2_hit_counts
+  104 000000D4 E5801000        STR              r1, [r0]
+  105 000000D8 E59F0730        LDR              r0, =offset3_hit_counts
+  106 000000DC E5801000        STR              r1, [r0]
+  107 000000E0 E59F072C        LDR              r0, =offset4_hit_counts
+  108 000000E4 E5801000        STR              r1, [r0]
+  109 000000E8 E59F0728        LDR              r0, =offset5_hit_counts
+  110 000000EC E5801000        STR              r1, [r0]
+  111 000000F0 E8BD4000        LDMFD            sp!, {lr}
+  112 000000F4 E12FFF1E        BX               lr
+  113 000000F8         
+  114 000000F8         enemy_motion
+  115 000000F8 E92D4000        STMFD            SP!, {lr}
+  116 000000FC         keep_moving2
+  117 000000FC         
+  118 000000FC         
+  119 000000FC E59F06C0        LDR              r0, =left_right_dir_flag
+  120 00000100 E5901000        LDR              r1, [r0]
+  121 00000104         
+  122 00000104 E3510000        CMP              r1, #0
+  123 00000108 1A000004        BNE              shifts_left
+  124 0000010C         ;the code below is shifting right
+  125 0000010C EBFFFFFE        BL               enemy_motioning_right
+  126 00000110         
+
+
+
+ARM Macro Assembler    Page 4 
+
+
+  127 00000110 E59F16B0        LDR              r1 , =promptoffset
+  128 00000114 E5910000        LDR              r0, [r1]
+  129 00000118 EBFFFFFE        BL               output_string
+  130 0000011C         
+  131 0000011C         ;B keep_moving2
+  132 0000011C EA000003        B                idc
+  133 00000120         shifts_left
+  134 00000120         ; the code below is shifting left
+  135 00000120 EBFFFFFE        BL               enemy_motioning_left
+  136 00000124         
+  137 00000124         
+  138 00000124 E59F169C        LDR              r1 , =promptoffset
+  139 00000128 E5910000        LDR              r0, [r1]
+  140 0000012C EBFFFFFE        BL               output_string
+  141 00000130         
+  142 00000130         ;B keep_movin
+  143 00000130         
+  144 00000130         idc
+  145 00000130         ;CMP AND (enemyformation, =0x100000 ) , 0
+  146 00000130         ; This mean the formation of enemy has reach the left mo
+                       st  wall and ready to bounce back 
+  147 00000130         
+  148 00000130 E8BD4000        LDMFD            SP!, {lr}
+  149 00000134 E12FFF1E        BX               lr
+  150 00000138         
+  151 00000138         enemy_motioning_right
+  152 00000138 E92D5FFF        STMFD            SP!, {r0-r12,lr}
+  153 0000013C         
+  154 0000013C         ;CMP  AND (enemyformation, #1) , 0
+  155 0000013C         ;This means the formation of enemy has reach the right m
+                       ost wall and ready to bounce back
+  156 0000013C         
+  157 0000013C EB000148        BL               checking_if_next_step_is_right_
+wall
+  158 00000140         
+  159 00000140 E35C0000        CMP              r12, #0
+  160 00000144 1A000049        BNE              reached_right_wall
+  161 00000148         ;right most bit on enemyformation is 0
+  162 00000148         ;Here is my new idea, stores 7 in a r3 
+  163 00000148         ;start with offset + r3 enemy location, store that into 
+                       offset + r3 + 1 location
+  164 00000148         ;Decrement r3 
+  165 00000148         ;exit when r3 is 0 or less than depends on if the left m
+                       ost is moving
+  166 00000148 E59F467C        LDR              r4, =enemyoffset
+  167 0000014C E59F968C        LDR              r9, =enemycounts
+  168 00000150 E59F869C        LDR              r8, =right_enemycounts
+  169 00000154 E59F06AC        LDR              r0, =offset_hit_counts
+  170 00000158         
+  171 00000158         repeating
+  172 00000158 E5982000        LDR              r2, [r8]
+  173 0000015C         
+  174 0000015C E3520000        CMP              r2, #0
+  175 00000160 1A000003        BNE              next_row
+  176 00000164 E2899010        ADD              r9, r9, #0x10
+  177 00000168 E2844010        ADD              r4, r4, #0x10
+  178 0000016C E2888010        ADD              r8, r8, #0x10
+  179 00000170 EAFFFFF8        B                repeating
+  180 00000174         next_row
+
+
+
+ARM Macro Assembler    Page 5 
+
+
+  181 00000174         
+  182 00000174 E59F36A0        LDR              r3, =0x40007170
+  183 00000178 E1540003        CMP              r4, r3
+  184 0000017C 0A000034        BEQ              done_with_all_row_movement_once
+  185 00000180         ;SUB r2, r2, #1
+  186 00000180 E1A03002        MOV              r3, r2      ;
+  187 00000184 E5D07000        LDRB             r7, [r0]
+  188 00000188 E5945000        LDR              r5, [r4]
+  189 0000018C         
+  190 0000018C         ;CMP r6, flagof just reached left wall
+  191 0000018C E59F662C        LDR              r6, =flagof_just_reached_left_w
+all
+  192 00000190 E5961000        LDR              r1, [r6]
+  193 00000194 E3510000        CMP              r1, #0
+  194 00000198 0A000000        BEQ              didnt_just_reached_left_wall
+  195 0000019C         
+  196 0000019C         ; SUB r1, r1 , #1
+  197 0000019C         ; STR r1, [r6]
+  198 0000019C EA000001        B                keep_moving
+  199 000001A0         ; LDRB r6, [r5,-r7]
+  200 000001A0         didnt_just_reached_left_wall
+  201 000001A0 E5D06000        LDRB             r6, [r0]
+  202 000001A4 E0455006        SUB              r5, r5, r6
+  203 000001A8         
+  204 000001A8         keep_moving
+  205 000001A8         
+  206 000001A8 E3730002        CMP              r3, #-2
+  207 000001AC 0A000019        BEQ              every_enemy_has_shifted_one_pos
+ition
+  208 000001B0 E3730001        CMP              r3, #-1
+  209 000001B4 0A000012        BEQ              speical_case_store_space_into_e
+nemyoffset
+  210 000001B8         
+  211 000001B8         
+  212 000001B8 E7D56003        LDRB             r6, [r5, r3]
+  213 000001BC         no_exception_okay
+  214 000001BC         
+  215 000001BC         
+  216 000001BC E356005E        CMP              r6, #0x5E
+  217 000001C0 1A000001        BNE              its_okay
+  218 000001C4         ;if r6 is 0x5e, i shouldnt skip, i should store 0x20 to
+  219 000001C4 E3A06020        MOV              r6, #0x20
+  220 000001C8         ;SUB r3, r3 , #1
+  221 000001C8         ; B keep_moving
+  222 000001C8 EA000002        B                its_okay22
+  223 000001CC         its_okay
+  224 000001CC         
+  225 000001CC E3560076        CMP              r6, #0x76
+  226 000001D0 1A000000        BNE              its_okay22
+  227 000001D4         ;if r6 is 0x5e, i shouldnt skip, i should store 0x20 to
+  228 000001D4 E3A06020        MOV              r6, #0x20
+  229 000001D8         ;SUB r3, r3 , #1
+  230 000001D8         ; B keep_moving
+  231 000001D8         its_okay22
+  232 000001D8         
+  233 000001D8         
+  234 000001D8 E2833001        ADD              r3, r3 , #1
+  235 000001DC E7D57003        LDRB             r7, [r5,r3]
+  236 000001E0 E2433001        SUB              r3, r3 , #1
+
+
+
+ARM Macro Assembler    Page 6 
+
+
+  237 000001E4 E357007C        CMP              r7, #0x7C
+  238 000001E8 1A000001        BNE              its_fine
+  239 000001EC E2433001        SUB              r3, r3, #1
+  240 000001F0 EAFFFFEC        B                keep_moving
+  241 000001F4         its_fine
+  242 000001F4         
+  243 000001F4         
+  244 000001F4 E2833001        ADD              r3, r3 , #1
+  245 000001F8 E7C56003        STRB             r6, [r5,r3]
+  246 000001FC E2433002        SUB              r3, r3 , #2
+  247 00000200         
+  248 00000200 EAFFFFE8        B                keep_moving
+  249 00000204         
+  250 00000204         speical_case_store_space_into_enemyoffset
+  251 00000204 E594A000        LDR              r10, [r4]
+  252 00000208 E3A0B020        LDR              r11, =0x20
+  253 0000020C E5CAB000        STRB             r11, [r10]
+  254 00000210 E2433001        SUB              r3, r3, #1
+  255 00000214 EAFFFFE3        B                keep_moving
+  256 00000218         
+  257 00000218         every_enemy_has_shifted_one_position
+  258 00000218 E5945000        LDR              r5, [r4]
+  259 0000021C E2855001        ADD              r5, r5, #1
+  260 00000220 E5845000        STR              r5,[r4]     ;update offset addr
+                                                            ess by 1
+  261 00000224         
+  262 00000224         row_has_0_enemy
+  263 00000224 E2844010        ADD              r4, r4 , #0x10
+  264 00000228 E59F35EC        LDR              r3, =0x40007170
+  265 0000022C E1540003        CMP              r4, r3
+  266 00000230 0AFFFFCF        BEQ              next_row
+  267 00000234 E2888010        ADD              r8, r8, #0x10
+  268 00000238 E2800010        ADD              r0, r0, #0x10 ;?
+  269 0000023C E2899010        ADD              r9, r9, #0x10
+  270 00000240 E599A000        LDR              r10, [r9]
+  271 00000244 E35A0000        CMP              r10, #0
+  272 00000248 0AFFFFF5        BEQ              row_has_0_enemy
+  273 0000024C E5982000        LDR              r2, [r8]
+  274 00000250 EAFFFFC7        B                next_row
+  275 00000254         
+  276 00000254         done_with_all_row_movement_once
+  277 00000254         
+  278 00000254         ;LDR r7, =0x40007120
+  279 00000254         ;STR r7, [r4] 
+  280 00000254         ;LDR r4, =enemy2offset
+  281 00000254 E59F6564        LDR              r6, =flagof_just_reached_left_w
+all
+  282 00000258 E5961000        LDR              r1, [r6]
+  283 0000025C E3510000        CMP              r1, #0
+  284 00000260 DA000055        BLE              stop_it
+  285 00000264 E2411001        SUB              r1, r1, #1
+  286 00000268 E5C61000        STRB             r1, [r6]
+  287 0000026C EA000052        B                stop_it
+  288 00000270         
+  289 00000270         reached_right_wall
+  290 00000270         ;BL update_map
+  291 00000270         ;right most bit on enemyformation is 1
+  292 00000270         ;that means enemy can no longer move right
+  293 00000270         
+
+
+
+ARM Macro Assembler    Page 7 
+
+
+  294 00000270 E59F55A8        LDR              r5, =0x40007110
+  295 00000274         ;MOV r6, #6 ; 5 rows of enemy
+  296 00000274         ;ADD functionality that shifts everyrow down 
+  297 00000274 E3A02006        MOV              r2, #6      ;
+  298 00000278         ;;;;;;; MAKE r6 varibable,, compare statement, if enemy5
+                       counts is 0
+  299 00000278         ; check decreasing order, and set to lowest non 0 enemyo
+                       ffset
+  300 00000278 E59FB55C        LDR              r11, =enemy5offset
+  301 0000027C E3A06006        MOV              r6, #6
+  302 00000280 E59F8590        LDR              r8, =offset5_hit_counts
+  303 00000284 E59F0564        LDR              r0, =enemy5counts ; usable regi
+                                                            ,  r0, r3, r11
+  304 00000288 E5D03000        LDRB             r3, [r0]
+  305 0000028C E3530000        CMP              r3, #0
+  306 00000290 1A00001B        BNE              done_with_filtering ;if 5th lin
+                                                            e enemy isnt all di
+                                                            e, we dont do anyth
+                                                            ing
+  307 00000294         
+  308 00000294         ;following code is what happen when 5th line enemy died
+  309 00000294         
+  310 00000294 E59FB53C        LDR              r11, =enemy4offset ;1.first, re
+                                                            -set the enemy5offs
+                                                            et to corresponding
+                                                             enemy?offset
+  311 00000298 E2466001        SUB              r6, r6, #1  ;2.subtract r6, by 
+                                                            1
+  312 0000029C E59F8570        LDR              r8, =offset4_hit_counts
+  313 000002A0 E59F0544        LDR              r0, =enemy4counts
+  314 000002A4 E5D03000        LDRB             r3, [r0]    ;3.Check if 4th ene
+                                                            mycount is 0
+  315 000002A8 E3530000        CMP              r3, #0
+  316 000002AC 1A000014        BNE              done_with_filtering ;4. if its 
+                                                            greater than 0, bre
+                                                            ak out loops and ev
+                                                            erything should rem
+                                                            ain fine
+  317 000002B0         
+  318 000002B0         ;5. if its 0, loop again with decending order
+  319 000002B0 E59FB51C        LDR              r11,=enemy3offset
+  320 000002B4 E2466001        SUB              r6, r6, #1
+  321 000002B8 E59F8550        LDR              r8, =offset3_hit_counts
+  322 000002BC E59F0524        LDR              r0, =enemy3counts
+  323 000002C0 E5D03000        LDRB             r3, [r0]
+  324 000002C4 E3530000        CMP              r3, #0
+  325 000002C8 1A00000D        BNE              done_with_filtering
+  326 000002CC         
+  327 000002CC E59FB4FC        LDR              r11,=enemy2offset
+  328 000002D0 E2466001        SUB              r6, r6, #1
+  329 000002D4 E59F8530        LDR              r8, =offset2_hit_counts
+  330 000002D8 E59F0504        LDR              r0, =enemy2counts
+  331 000002DC E5D03000        LDRB             r3, [r0]
+  332 000002E0 E3530000        CMP              r3, #0
+  333 000002E4 1A000006        BNE              done_with_filtering
+  334 000002E8         
+  335 000002E8 E59FB4DC        LDR              r11,=enemyoffset
+  336 000002EC E2466001        SUB              r6, r6, #1
+  337 000002F0 E59F8510        LDR              r8, =offset_hit_counts
+
+
+
+ARM Macro Assembler    Page 8 
+
+
+  338 000002F4 E59F04E4        LDR              r0, =enemycounts
+  339 000002F8 E5D03000        LDRB             r3, [r0]
+  340 000002FC E3530000        CMP              r3, #0
+  341 00000300 1AFFFFFF        BNE              done_with_filtering
+  342 00000304         
+  343 00000304         
+  344 00000304         
+  345 00000304         
+  346 00000304         done_with_filtering
+  347 00000304 E1A0C006        MOV              r12, r6
+  348 00000308 E59B1000        LDR              r1, [r11]   ; r1 has the addres
+                                                            s
+  349 0000030C E5989000        LDR              r9, [r8]
+  350 00000310 E0411009        SUB              r1, r1, r9
+  351 00000314         
+  352 00000314         
+  353 00000314         continue_on_same_col
+  354 00000314         
+  355 00000314 E3560000        CMP              r6, #0
+  356 00000318 0A000009        BEQ              one_col_is_done_next_col_ready
+  357 0000031C E7D13002        LDRB             r3, [r1, r2] ; r3 has the value
+                                                            
+  358 00000320 E3530058        CMP              r3, #0x58
+  359 00000324 1A000000        BNE              jump_this
+  360 00000328 E3A03020        MOV              r3, #0x20
+  361 0000032C         jump_this
+  362 0000032C E2822019        ADD              r2, r2, #0x19
+  363 00000330 E7C13002        STRB             r3, [r1, r2]
+  364 00000334 E2422019        SUB              r2, r2, #0x19
+  365 00000338 E2411019        SUB              r1, r1 , #0x19 ;decrement r1
+  366 0000033C E2466001        SUB              r6, r6 , #1
+  367 00000340 EAFFFFF3        B                continue_on_same_col
+  368 00000344         
+  369 00000344         one_col_is_done_next_col_ready
+  370 00000344         
+  371 00000344 E59B1000        LDR              r1, [r11]   ; r1 has the addres
+                                                            s
+  372 00000348         ;LDR r8, =offset5_hit_counts
+  373 00000348 E5989000        LDR              r9, [r8]
+  374 0000034C E0411009        SUB              r1, r1, r9
+  375 00000350 E2422001        SUB              r2, r2, #1
+  376 00000354         
+  377 00000354         
+  378 00000354         
+  379 00000354 E1A0600C        MOV              r6, r12     ;
+  380 00000358 E3720001        CMP              r2, #-1
+  381 0000035C 1AFFFFEC        BNE              continue_on_same_col
+  382 00000360         
+  383 00000360         all_col_done
+  384 00000360         
+  385 00000360 E59F0474        LDR              r0, =enemy5offset
+  386 00000364 E5901000        LDR              r1, [r0]
+  387 00000368 E2811019        ADD              r1, r1, #0x19
+  388 0000036C E5801000        STR              r1, [r0]
+  389 00000370         
+  390 00000370 E59F0460        LDR              r0, =enemy4offset
+  391 00000374 E5901000        LDR              r1, [r0]
+  392 00000378 E2811019        ADD              r1, r1, #0x19
+  393 0000037C E5801000        STR              r1, [r0]
+
+
+
+ARM Macro Assembler    Page 9 
+
+
+  394 00000380 E59F044C        LDR              r0, =enemy3offset
+  395 00000384 E5901000        LDR              r1, [r0]
+  396 00000388 E2811019        ADD              r1, r1, #0x19
+  397 0000038C E5801000        STR              r1, [r0]
+  398 00000390 E59F0438        LDR              r0, =enemy2offset
+  399 00000394 E5901000        LDR              r1, [r0]
+  400 00000398 E2811019        ADD              r1, r1, #0x19
+  401 0000039C E5801000        STR              r1, [r0]
+  402 000003A0 E59F0424        LDR              r0, =enemyoffset
+  403 000003A4 E5901000        LDR              r1, [r0]
+  404 000003A8 E2811019        ADD              r1, r1, #0x19
+  405 000003AC E5801000        STR              r1, [r0]
+  406 000003B0         ;Set flag so the system will know its time to rutn left 
+                       
+  407 000003B0 E59F040C        LDR              r0, =left_right_dir_flag
+  408 000003B4 E3A01001        MOV              r1, #1
+  409 000003B8 E5801000        STR              r1, [r0]    ; 0 means shifts ri
+                                                            ght
+  410 000003BC         ; 1 means shifts left
+  411 000003BC         ;B enemy_motioning_left
+  412 000003BC         ;line  and  should be remove and replace inside FIQ so e
+                       very 1 sec it shifts left
+  413 000003BC         
+  414 000003BC         stop_it
+  415 000003BC E8BD5FFF        LDMFD            SP!, {r0-r12,lr}
+  416 000003C0 E12FFF1E        BX               lr
+  417 000003C4         
+  418 000003C4         
+  419 000003C4         
+  420 000003C4         
+  421 000003C4         
+  422 000003C4         
+  423 000003C4         
+  424 000003C4         enemy_motioning_left
+  425 000003C4 E92D5FFF        STMFD            SP!, {r0-r12,lr}
+  426 000003C8         
+  427 000003C8         ;CMP  AND (enemyformation, #1) , 0
+  428 000003C8         ;This means the formation of enemy has reach the right m
+                       ost wall and ready to bounce back
+  429 000003C8 E59F03FC        LDR              r0, =enemyoffset
+  430 000003CC E5901000        LDR              r1, [r0]
+  431 000003D0 E5512001        LDRB             r2, [r1, #-1]
+  432 000003D4 E352007C        CMP              r2, #0x7C
+  433 000003D8 0A000048        BEQ              Reached_left_wall
+  434 000003DC         
+  435 000003DC E59F03EC        LDR              r0, =enemy2offset
+  436 000003E0 E5901000        LDR              r1, [r0]
+  437 000003E4 E5512001        LDRB             r2, [r1, #-1]
+  438 000003E8 E352007C        CMP              r2, #0x7C
+  439 000003EC 0A000043        BEQ              Reached_left_wall
+  440 000003F0         
+  441 000003F0 E59F03DC        LDR              r0, =enemy3offset
+  442 000003F4 E5901000        LDR              r1, [r0]
+  443 000003F8 E5512001        LDRB             r2, [r1, #-1]
+  444 000003FC E352007C        CMP              r2, #0x7C
+  445 00000400 0A00003E        BEQ              Reached_left_wall
+  446 00000404         
+  447 00000404 E59F03CC        LDR              r0, =enemy4offset
+  448 00000408 E5901000        LDR              r1, [r0]
+
+
+
+ARM Macro Assembler    Page 10 
+
+
+  449 0000040C E5512001        LDRB             r2, [r1, #-1]
+  450 00000410 E352007C        CMP              r2, #0x7C
+  451 00000414 0A000039        BEQ              Reached_left_wall
+  452 00000418         
+  453 00000418 E59F03BC        LDR              r0, =enemy5offset
+  454 0000041C E5901000        LDR              r1, [r0]
+  455 00000420 E5512001        LDRB             r2, [r1, #-1]
+  456 00000424 E352007C        CMP              r2, #0x7C
+  457 00000428 0A000034        BEQ              Reached_left_wall
+  458 0000042C         
+  459 0000042C         
+  460 0000042C         ;Here is my new idea, stores 7 in a r3 
+  461 0000042C         ;start with offset + r3 enemy location, store that into 
+                       offset + r3 + 1 location
+  462 0000042C         ;Decrement r3 
+  463 0000042C         ;exit when r3 is 0 or less than depends on if the left m
+                       ost is moving
+  464 0000042C E59F4398        LDR              r4, =enemyoffset
+  465 00000430 E59F93A8        LDR              r9, =enemycounts
+  466 00000434 E5945000        LDR              r5, [r4]
+  467 00000438 E2455001        SUB              r5, r5, #1
+  468 0000043C E5845000        STR              r5, [r4]
+  469 00000440 E3A03000        MOV              r3, #0
+  470 00000444 EA000006        B                left_keep_moving
+  471 00000448         left_next_row
+  472 00000448 E59F33CC        LDR              r3, =0x40007170
+  473 0000044C E1540003        CMP              r4, r3
+  474 00000450 0A000029        BEQ              left_done_with_all_row_movement
+_once
+  475 00000454 E3A03000        MOV              r3, #0
+  476 00000458 E5945000        LDR              r5, [r4]
+  477 0000045C E2455001        SUB              r5, r5, #1
+  478 00000460 E5845000        STR              r5, [r4]
+  479 00000464         
+  480 00000464         left_keep_moving
+  481 00000464         ;1. set enemyoffset -= 1,
+  482 00000464         ;2. Store EO+1 into EO
+  483 00000464         ;         E0+2 into E0+1
+  484 00000464         ;         E0+4 into E0+3
+  485 00000464         
+  486 00000464 E3530008        CMP              r3, #8
+  487 00000468 0A00001E        BEQ              left_every_enemy_has_shifted_on
+e_position
+  488 0000046C E3530007        CMP              r3, #7
+  489 00000470 0A000017        BEQ              left_speical_case_store_space_i
+nto_enemyoffset
+  490 00000474         
+  491 00000474 E2833001        ADD              r3, r3, #1
+  492 00000478         
+  493 00000478 E7D56003        LDRB             r6, [r5, r3]
+  494 0000047C E356007C        CMP              r6, #0x7C
+  495 00000480 1A000004        BNE              didnt_hit_wall
+  496 00000484 E3A06020        MOV              r6, #0x20
+  497 00000488 E2433001        SUB              r3, r3 , #1
+  498 0000048C E7C56003        STRB             r6, [r5,r3]
+  499 00000490 E2833001        ADD              r3, r3, #1
+  500 00000494 EA000013        B                left_every_enemy_has_shifted_on
+e_position
+  501 00000498         didnt_hit_wall
+
+
+
+ARM Macro Assembler    Page 11 
+
+
+  502 00000498 E356005E        CMP              r6, #0x5E
+  503 0000049C 1A000001        BNE              left_its_okay
+  504 000004A0 E3A06020        MOV              r6, #0x20
+  505 000004A4 EA000006        B                left_its_okay222
+  506 000004A8         
+  507 000004A8         left_its_okay
+  508 000004A8         
+  509 000004A8 E3560076        CMP              r6, #0x76
+  510 000004AC 1A000001        BNE              left_its_okay22
+  511 000004B0 E3A06020        MOV              r6, #0x20
+  512 000004B4 EA000002        B                left_its_okay222
+  513 000004B8         left_its_okay22
+  514 000004B8         
+  515 000004B8 E356007E        CMP              r6, #0x7E
+  516 000004BC 1A000000        BNE              left_its_okay222
+  517 000004C0 E3A06020        MOV              r6, #0x20
+  518 000004C4         
+  519 000004C4         left_its_okay222
+  520 000004C4         
+  521 000004C4         
+  522 000004C4         
+  523 000004C4         
+  524 000004C4         
+  525 000004C4 E2433001        SUB              r3, r3 , #1
+  526 000004C8 E7C56003        STRB             r6, [r5,r3]
+  527 000004CC E2833001        ADD              r3, r3 , #1
+  528 000004D0 EAFFFFE3        B                left_keep_moving
+  529 000004D4         
+  530 000004D4         left_speical_case_store_space_into_enemyoffset
+  531 000004D4 E085A003        ADD              r10, r5, r3
+  532 000004D8 E3A0B020        LDR              r11, =0x20
+  533 000004DC E5CAB000        STRB             r11, [r10]  ; eror
+  534 000004E0 E2833001        ADD              r3, r3, #1
+  535 000004E4 EAFFFFDE        B                left_keep_moving
+  536 000004E8         
+  537 000004E8         left_every_enemy_has_shifted_one_position
+  538 000004E8         ;Add compare statement, to see if corresponding enemy(1,
+                       2,3,4,5)_left is 0 or not
+  539 000004E8         ; it its 0, then add another 0x10 to skip
+  540 000004E8         row_empty_next
+  541 000004E8 E2844010        ADD              r4, r4 , #0x10
+  542 000004EC E5F95010        LDRB             r5, [r9,#0x10]!
+  543 000004F0 E3550000        CMP              r5, #0
+  544 000004F4 0AFFFFFB        BEQ              row_empty_next
+  545 000004F8 EAFFFFD2        B                left_next_row
+  546 000004FC         
+  547 000004FC         left_done_with_all_row_movement_once
+  548 000004FC         
+  549 000004FC         ;LDR r7, =0x40007120
+  550 000004FC         ;STR r7, [r4] 
+  551 000004FC         ;LDR r4, =enemy2offset
+  552 000004FC         
+  553 000004FC EA000056        B                done_move_right_once
+  554 00000500         
+  555 00000500         
+  556 00000500         
+  557 00000500         Reached_left_wall
+  558 00000500         
+  559 00000500         ;Code below is what happen when the enemy reaches the le
+
+
+
+ARM Macro Assembler    Page 12 
+
+
+                       ft most wall 
+  560 00000500         ; I need to relocate leftmost_available space to default
+                        state, ; i dont know why exactly but i feel like its ne
+                       cessary
+  561 00000500         ;Prompt 0x40000CDC
+  562 00000500         ;enemy5offset 0x40000D74
+  563 00000500 E59F02B8        LDR              r0, =flagof_just_reached_left_w
+all
+  564 00000504 E3A01007        MOV              r1, #7
+  565 00000508 E5C01000        STRB             r1, [r0]
+  566 0000050C         ;This is where i insert how to indentify that one line i
+                       s empty, the structure should be same as moving down on 
+                       
+  567 0000050C         ; right wall
+  568 0000050C         
+  569 0000050C         
+  570 0000050C         
+  571 0000050C E59F02C8        LDR              r0, =enemy5offset
+  572 00000510 E59F22D8        LDR              r2,=enemy5counts
+  573 00000514 E5D24000        LDRB             r4, [r2]
+  574 00000518 E3540000        CMP              r4, #0
+  575 0000051C 1A000013        BNE              done_left_filter_setup
+  576 00000520         
+  577 00000520 E59F02B0        LDR              r0, =enemy4offset
+  578 00000524 E59F22C0        LDR              r2,=enemy4counts
+  579 00000528 E5D24000        LDRB             r4, [r2]
+  580 0000052C E3540000        CMP              r4, #0
+  581 00000530 1A00000E        BNE              done_left_filter_setup
+  582 00000534         
+  583 00000534 E59F0298        LDR              r0, =enemy3offset
+  584 00000538 E59F22A8        LDR              r2,=enemy3counts
+  585 0000053C E5D24000        LDRB             r4, [r2]
+  586 00000540 E3540000        CMP              r4, #0
+  587 00000544 1A000009        BNE              done_left_filter_setup
+  588 00000548         
+  589 00000548 E59F0280        LDR              r0, =enemy2offset
+  590 0000054C E59F2290        LDR              r2,=enemy2counts
+  591 00000550 E5D24000        LDRB             r4, [r2]
+  592 00000554 E3540000        CMP              r4, #0
+  593 00000558 1A000004        BNE              done_left_filter_setup
+  594 0000055C         
+  595 0000055C E59F0268        LDR              r0, =enemyoffset
+  596 00000560 E59F2278        LDR              r2,=enemycounts
+  597 00000564 E5D24000        LDRB             r4, [r2]
+  598 00000568 E3540000        CMP              r4, #0
+  599 0000056C 1AFFFFFF        BNE              done_left_filter_setup
+  600 00000570         
+  601 00000570         
+  602 00000570         
+  603 00000570         
+  604 00000570         
+  605 00000570         done_left_filter_setup
+  606 00000570         
+  607 00000570 E5901000        LDR              r1, [r0]    ; r1 stores address
+                                                             of enenmy5offset
+  608 00000574 E1A0C001        MOV              r12, r1
+  609 00000578         
+  610 00000578 E59F0248        LDR              r0, =promptoffset
+  611 0000057C E5902000        LDR              r2, [r0]
+
+
+
+ARM Macro Assembler    Page 13 
+
+
+  612 00000580 E0411002        SUB              r1 ,r1 ,r2
+  613 00000584 E2411002        SUB              r1, r1, #2
+  614 00000588 E1A07001        MOV              r7, r1
+  615 0000058C E3A08019        MOV              r8, #0x19
+  616 00000590 EBFFFFFE        BL               div_and_mod
+  617 00000594         
+  618 00000594 E1A0200C        MOV              r2, r12     ; r1 stores address
+                                                             of enenmy5offset
+  619 00000598         
+  620 00000598 E0421001        SUB              r1, r2 , r1
+  621 0000059C         
+  622 0000059C E1A02001        MOV              r2, r1      ; I plan to use r2 
+                                                            for veritcal operat
+                                                            ion
+  623 000005A0 E1A03001        MOV              r3, r1      ; I plan using r3 f
+                                                            or horizontal opera
+                                                            tion 
+  624 000005A4 E3A05000        MOV              r5, #0      ; this represent 5 
+                                                            rows of enemy
+  625 000005A8 E3A06000        MOV              r6, #0      ; this represents 7
+                                                             cols of enemy
+  626 000005AC         continue_on_same_coll
+  627 000005AC E3550006        CMP              r5, #6
+  628 000005B0 0A00000A        BEQ              one_row_done_next_row_ready
+  629 000005B4 E5D24000        LDRB             r4, [r2]
+  630 000005B8 E3540058        CMP              r4, #0x58
+  631 000005BC 1A000000        BNE              not_x_copy
+  632 000005C0 E3A04020        MOV              r4, #0x20
+  633 000005C4         not_x_copy
+  634 000005C4 E354002D        CMP              r4, #0x2D
+  635 000005C8 1A000000        BNE              not_wall_copy
+  636 000005CC E3A04020        MOV              r4, #0x20
+  637 000005D0         not_wall_copy
+  638 000005D0 E5C24019        STRB             r4, [r2, #0x19]
+  639 000005D4 E2422019        SUB              r2, r2, #0x19
+  640 000005D8 E2855001        ADD              r5, r5, #1
+  641 000005DC EAFFFFF2        B                continue_on_same_coll
+  642 000005E0         ;create copy of enemy5offset
+  643 000005E0         ;and manuiplate it 
+  644 000005E0         ;MOV D74 to D8D differnce 0x19
+  645 000005E0         ;MOV D58 to D74
+  646 000005E0         ;..............
+  647 000005E0         ;MOV CF7 to D10
+  648 000005E0         
+  649 000005E0         one_row_done_next_row_ready
+  650 000005E0         
+  651 000005E0 E3560006        CMP              r6, #6
+  652 000005E4 0A000005        BEQ              ready_tocall_enemy_motioning_ri
+ght
+  653 000005E8 E2833001        ADD              r3, r3 , #1
+  654 000005EC E1A02003        MOV              r2, r3
+  655 000005F0 E3A05000        MOV              r5, #0
+  656 000005F4 E2866001        ADD              r6, r6, #1
+  657 000005F8 EAFFFFEB        B                continue_on_same_coll
+  658 000005FC         ;After one col is done shifting down
+  659 000005FC         ;create a new copy of enemy5offset, increment by 1 
+  660 000005FC         ;and start looping again
+  661 000005FC         ;
+  662 000005FC         done_shifting_once
+
+
+
+ARM Macro Assembler    Page 14 
+
+
+  663 000005FC         
+  664 000005FC EA000016        B                done_move_right_once
+  665 00000600         
+  666 00000600         ready_tocall_enemy_motioning_right
+  667 00000600         
+  668 00000600 E59F01D4        LDR              r0, =enemy5offset
+  669 00000604 E5901000        LDR              r1, [r0]
+  670 00000608 E2811019        ADD              r1, r1, #0x19
+  671 0000060C E5801000        STR              r1, [r0]
+  672 00000610         
+  673 00000610 E59F01C0        LDR              r0, =enemy4offset
+  674 00000614 E5901000        LDR              r1, [r0]
+  675 00000618 E2811019        ADD              r1, r1, #0x19
+  676 0000061C E5801000        STR              r1, [r0]
+  677 00000620         
+  678 00000620 E59F01AC        LDR              r0, =enemy3offset
+  679 00000624 E5901000        LDR              r1, [r0]
+  680 00000628 E2811019        ADD              r1, r1, #0x19
+  681 0000062C E5801000        STR              r1, [r0]
+  682 00000630         
+  683 00000630 E59F0198        LDR              r0, =enemy2offset
+  684 00000634 E5901000        LDR              r1, [r0]
+  685 00000638 E2811019        ADD              r1, r1, #0x19
+  686 0000063C E5801000        STR              r1, [r0]
+  687 00000640         
+  688 00000640 E59F0184        LDR              r0, =enemyoffset
+  689 00000644 E5901000        LDR              r1, [r0]
+  690 00000648 E2811019        ADD              r1, r1, #0x19
+  691 0000064C E5801000        STR              r1, [r0]
+  692 00000650         
+  693 00000650 E59F016C        LDR              r0, =left_right_dir_flag
+  694 00000654 E3A01000        MOV              r1, #0
+  695 00000658 E5801000        STR              r1, [r0]    ; 0 means shifts ri
+                                                            ght
+  696 0000065C         
+  697 0000065C         
+  698 0000065C         
+  699 0000065C         
+  700 0000065C         
+  701 0000065C         done_move_right_once
+  702 0000065C         
+  703 0000065C E8BD5FFF        LDMFD            SP!, {r0-r12,lr}
+  704 00000660 E12FFF1E        BX               lr
+  705 00000664         
+  706 00000664         
+  707 00000664         
+  708 00000664         
+  709 00000664         checking_if_next_step_is_right_wall
+  710 00000664 E92D4007        STMFD            SP!, {r0-r2,lr}
+  711 00000668 E3A0C000        MOV              r12, #0
+  712 0000066C E59F0154        LDR              r0, =promptoffset
+  713 00000670 E5901000        LDR              r1, [r0]
+  714 00000674         
+  715 00000674 E5F12048        LDRB             r2, [r1, #0x48]!
+  716 00000678 E3C220FE        BIC              r2, #0xFE
+  717 0000067C E3520001        CMP              r2, #1
+  718 00000680 1A000001        BNE              line_1_movable
+  719 00000684 E3A0C001        MOV              r12, #1
+  720 00000688 EA00002E        B                done_sensing
+
+
+
+ARM Macro Assembler    Page 15 
+
+
+  721 0000068C         line_1_movable
+  722 0000068C         
+  723 0000068C E5F12019        LDRB             r2, [r1, #0x19]!
+  724 00000690 E3C220FE        BIC              r2, #0xFE
+  725 00000694 E3520001        CMP              r2, #1
+  726 00000698 1A000001        BNE              line_2_movable
+  727 0000069C E3A0C001        MOV              r12, #1
+  728 000006A0 EA000028        B                done_sensing
+  729 000006A4         
+  730 000006A4         line_2_movable
+  731 000006A4         
+  732 000006A4 E5F12019        LDRB             r2, [r1, #0x19]!
+  733 000006A8 E3C220FE        BIC              r2, #0xFE
+  734 000006AC E3520001        CMP              r2, #1
+  735 000006B0 1A000001        BNE              line_3_movable
+  736 000006B4 E3A0C001        MOV              r12, #1
+  737 000006B8 EA000022        B                done_sensing
+  738 000006BC         
+  739 000006BC         line_3_movable
+  740 000006BC         
+  741 000006BC E5F12019        LDRB             r2, [r1, #0x19]!
+  742 000006C0 E3C220FE        BIC              r2, #0xFE
+  743 000006C4 E3520001        CMP              r2, #1
+  744 000006C8 1A000001        BNE              line_4_movable
+  745 000006CC E3A0C001        MOV              r12, #1
+  746 000006D0 EA00001C        B                done_sensing
+  747 000006D4         
+  748 000006D4         line_4_movable
+  749 000006D4         
+  750 000006D4 E5F12019        LDRB             r2, [r1, #0x19]!
+  751 000006D8 E3C220FE        BIC              r2, #0xFE
+  752 000006DC E3520001        CMP              r2, #1
+  753 000006E0 1A000001        BNE              line_5_movable
+  754 000006E4 E3A0C001        MOV              r12, #1
+  755 000006E8 EA000016        B                done_sensing
+  756 000006EC         
+  757 000006EC         line_5_movable
+  758 000006EC         
+  759 000006EC E5F12019        LDRB             r2, [r1, #0x19]!
+  760 000006F0 E3C220FE        BIC              r2, #0xFE
+  761 000006F4 E3520001        CMP              r2, #1
+  762 000006F8 1A000001        BNE              line_6_movable
+  763 000006FC E3A0C001        MOV              r12, #1
+  764 00000700 EA000010        B                done_sensing
+  765 00000704         
+  766 00000704         line_6_movable
+  767 00000704         
+  768 00000704 E5F12019        LDRB             r2, [r1, #0x19]!
+  769 00000708 E3C220FE        BIC              r2, #0xFE
+  770 0000070C E3520001        CMP              r2, #1
+  771 00000710 1A000001        BNE              line_7_movable
+  772 00000714 E3A0C001        MOV              r12, #1
+  773 00000718 EA00000A        B                done_sensing
+  774 0000071C         
+  775 0000071C         line_7_movable
+  776 0000071C         
+  777 0000071C E5F12019        LDRB             r2, [r1, #0x19]!
+  778 00000720 E3C220FE        BIC              r2, #0xFE
+  779 00000724 E3520001        CMP              r2, #1
+
+
+
+ARM Macro Assembler    Page 16 
+
+
+  780 00000728 1A000001        BNE              line_8_movable
+  781 0000072C E3A0C001        MOV              r12, #1
+  782 00000730 EA000004        B                done_sensing
+  783 00000734         
+  784 00000734         line_8_movable
+  785 00000734         
+  786 00000734 E5F12019        LDRB             r2, [r1, #0x19]!
+  787 00000738 E3C220FE        BIC              r2, #0xFE
+  788 0000073C E3520001        CMP              r2, #1
+  789 00000740 1A000000        BNE              done_sensing
+  790 00000744 E3A0C001        MOV              r12, #1
+  791 00000748         
+  792 00000748         
+  793 00000748         done_sensing
+  794 00000748 E8BD4007        LDMFD            SP!, {r0-r2,lr}
+  795 0000074C E12FFF1E        BX               lr
+  796 00000750         
+  797 00000750         
+  798 00000750         
+  799 00000750         check_less_of_offset_hit_counts
+  800 00000750 E92D4000        STMFD            SP!, {lr}
+  801 00000754         
+  802 00000754 E59F00AC        LDR              r0, =offset_hit_counts
+  803 00000758 E5901000        LDR              r1, [r0]
+  804 0000075C         
+  805 0000075C E59F00A8        LDR              r0, =offset2_hit_counts
+  806 00000760 E5902000        LDR              r2, [r0]    ; r1 should store t
+                                                            he lowest count
+  807 00000764 E1520001        CMP              r2, r1
+  808 00000768 CA000000        BGT              comparing_3
+  809 0000076C E1A01002        MOV              r1, r2
+  810 00000770         
+  811 00000770         comparing_3
+  812 00000770         
+  813 00000770 E59F0098        LDR              r0, =offset3_hit_counts
+  814 00000774 E5902000        LDR              r2, [r0]
+  815 00000778 E1520001        CMP              r2, r1
+  816 0000077C CA000000        BGT              comparing_4
+  817 00000780 E1A01002        MOV              r1, r2
+  818 00000784         
+  819 00000784         comparing_4
+  820 00000784         
+  821 00000784 E59F0088        LDR              r0, =offset4_hit_counts
+  822 00000788 E5902000        LDR              r2, [r0]
+  823 0000078C E1520001        CMP              r2, r1
+  824 00000790 CA000000        BGT              comparing_5
+  825 00000794 E1A01002        MOV              r1, r2
+  826 00000798         
+  827 00000798         comparing_5
+  828 00000798         
+  829 00000798 E59F0078        LDR              r0, =offset5_hit_counts
+  830 0000079C E5902000        LDR              r2, [r0]
+  831 000007A0 E1520001        CMP              r2, r1
+  832 000007A4 CA000000        BGT              done_comparing
+  833 000007A8 E1A01002        MOV              r1, r2
+  834 000007AC         
+  835 000007AC         done_comparing
+  836 000007AC         
+  837 000007AC E59F000C        LDR              r0, =flagof_just_reached_left_w
+
+
+
+ARM Macro Assembler    Page 17 
+
+
+all
+  838 000007B0 E5801000        STR              r1 , [r0]
+  839 000007B4         
+  840 000007B4 E8BD4000        LDMFD            SP!, {lr}
+  841 000007B8 E12FFF1E        BX               lr
+  842 000007BC                 END
+              400077F0 
+              4000700F 
+              400072F0 
+              40007100 
+              40007120 
+              40007130 
+              40007140 
+              40007150 
+              40007160 
+              40007270 
+              40007280 
+              40007290 
+              400072A0 
+              400072B0 
+              40007370 
+              40007380 
+              40007390 
+              400073A0 
+              400073B0 
+              40007500 
+              40007510 
+              40007520 
+              40007530 
+              40007540 
+              40007170 
+              40007110 
+Command Line: --debug --xref --diag_suppress=9931 --apcs=interwork --depend=.\o
+bjects\enemy.d -o.\objects\enemy.o -IC:\Keil_v5\ARM\RV31\INC -IC:\Keil_v5\ARM\C
+MSIS\Include -IC:\Keil_v5\ARM\Inc\Philips --predefine="__EVAL SETA 1" --predefi
+ne="__UVISION_VERSION SETA 518" --list=.\listings\enemy.lst enemy.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+GPIO 00000000
+
+Symbol: GPIO
+   Definitions
+      At line 1 in file enemy.s
+   Uses
+      None
+Comment: GPIO unused
+Reached_left_wall 00000500
+
+Symbol: Reached_left_wall
+   Definitions
+      At line 557 in file enemy.s
+   Uses
+      At line 433 in file enemy.s
+      At line 439 in file enemy.s
+      At line 445 in file enemy.s
+      At line 451 in file enemy.s
+      At line 457 in file enemy.s
+
+all_col_done 00000360
+
+Symbol: all_col_done
+   Definitions
+      At line 383 in file enemy.s
+   Uses
+      None
+Comment: all_col_done unused
+check_less_of_offset_hit_counts 00000750
+
+Symbol: check_less_of_offset_hit_counts
+   Definitions
+      At line 799 in file enemy.s
+   Uses
+      None
+Comment: check_less_of_offset_hit_counts unused
+checking_if_next_step_is_right_wall 00000664
+
+Symbol: checking_if_next_step_is_right_wall
+   Definitions
+      At line 709 in file enemy.s
+   Uses
+      At line 157 in file enemy.s
+Comment: checking_if_next_step_is_right_wall used once
+comparing_3 00000770
+
+Symbol: comparing_3
+   Definitions
+      At line 811 in file enemy.s
+   Uses
+      At line 808 in file enemy.s
+Comment: comparing_3 used once
+comparing_4 00000784
+
+Symbol: comparing_4
+   Definitions
+      At line 819 in file enemy.s
+   Uses
+      At line 816 in file enemy.s
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Relocatable symbols
+
+Comment: comparing_4 used once
+comparing_5 00000798
+
+Symbol: comparing_5
+   Definitions
+      At line 827 in file enemy.s
+   Uses
+      At line 824 in file enemy.s
+Comment: comparing_5 used once
+continue_on_same_col 00000314
+
+Symbol: continue_on_same_col
+   Definitions
+      At line 353 in file enemy.s
+   Uses
+      At line 367 in file enemy.s
+      At line 381 in file enemy.s
+
+continue_on_same_coll 000005AC
+
+Symbol: continue_on_same_coll
+   Definitions
+      At line 626 in file enemy.s
+   Uses
+      At line 641 in file enemy.s
+      At line 657 in file enemy.s
+
+didnt_hit_wall 00000498
+
+Symbol: didnt_hit_wall
+   Definitions
+      At line 501 in file enemy.s
+   Uses
+      At line 495 in file enemy.s
+Comment: didnt_hit_wall used once
+didnt_just_reached_left_wall 000001A0
+
+Symbol: didnt_just_reached_left_wall
+   Definitions
+      At line 200 in file enemy.s
+   Uses
+      At line 194 in file enemy.s
+Comment: didnt_just_reached_left_wall used once
+done_comparing 000007AC
+
+Symbol: done_comparing
+   Definitions
+      At line 835 in file enemy.s
+   Uses
+      At line 832 in file enemy.s
+Comment: done_comparing used once
+done_left_filter_setup 00000570
+
+Symbol: done_left_filter_setup
+   Definitions
+      At line 605 in file enemy.s
+   Uses
+      At line 575 in file enemy.s
+      At line 581 in file enemy.s
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 587 in file enemy.s
+      At line 593 in file enemy.s
+      At line 599 in file enemy.s
+
+done_move_right_once 0000065C
+
+Symbol: done_move_right_once
+   Definitions
+      At line 701 in file enemy.s
+   Uses
+      At line 553 in file enemy.s
+      At line 664 in file enemy.s
+
+done_sensing 00000748
+
+Symbol: done_sensing
+   Definitions
+      At line 793 in file enemy.s
+   Uses
+      At line 720 in file enemy.s
+      At line 728 in file enemy.s
+      At line 737 in file enemy.s
+      At line 746 in file enemy.s
+      At line 755 in file enemy.s
+      At line 764 in file enemy.s
+      At line 773 in file enemy.s
+      At line 782 in file enemy.s
+      At line 789 in file enemy.s
+
+done_shifting_once 000005FC
+
+Symbol: done_shifting_once
+   Definitions
+      At line 662 in file enemy.s
+   Uses
+      None
+Comment: done_shifting_once unused
+done_with_all_row_movement_once 00000254
+
+Symbol: done_with_all_row_movement_once
+   Definitions
+      At line 276 in file enemy.s
+   Uses
+      At line 184 in file enemy.s
+Comment: done_with_all_row_movement_once used once
+done_with_filtering 00000304
+
+Symbol: done_with_filtering
+   Definitions
+      At line 346 in file enemy.s
+   Uses
+      At line 306 in file enemy.s
+      At line 316 in file enemy.s
+      At line 325 in file enemy.s
+      At line 333 in file enemy.s
+      At line 341 in file enemy.s
+
+enemy_motion 000000F8
+
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+Relocatable symbols
+
+Symbol: enemy_motion
+   Definitions
+      At line 114 in file enemy.s
+   Uses
+      At line 8 in file enemy.s
+Comment: enemy_motion used once
+enemy_motioning_left 000003C4
+
+Symbol: enemy_motioning_left
+   Definitions
+      At line 424 in file enemy.s
+   Uses
+      At line 5 in file enemy.s
+      At line 135 in file enemy.s
+
+enemy_motioning_right 00000138
+
+Symbol: enemy_motioning_right
+   Definitions
+      At line 151 in file enemy.s
+   Uses
+      At line 4 in file enemy.s
+      At line 125 in file enemy.s
+
+enemy_setups 00000000
+
+Symbol: enemy_setups
+   Definitions
+      At line 44 in file enemy.s
+   Uses
+      At line 3 in file enemy.s
+Comment: enemy_setups used once
+every_enemy_has_shifted_one_position 00000218
+
+Symbol: every_enemy_has_shifted_one_position
+   Definitions
+      At line 257 in file enemy.s
+   Uses
+      At line 207 in file enemy.s
+Comment: every_enemy_has_shifted_one_position used once
+idc 00000130
+
+Symbol: idc
+   Definitions
+      At line 144 in file enemy.s
+   Uses
+      At line 132 in file enemy.s
+Comment: idc used once
+its_fine 000001F4
+
+Symbol: its_fine
+   Definitions
+      At line 241 in file enemy.s
+   Uses
+      At line 238 in file enemy.s
+Comment: its_fine used once
+its_okay 000001CC
+
+Symbol: its_okay
+
+
+
+ARM Macro Assembler    Page 5 Alphabetic symbol ordering
+Relocatable symbols
+
+   Definitions
+      At line 223 in file enemy.s
+   Uses
+      At line 217 in file enemy.s
+Comment: its_okay used once
+its_okay22 000001D8
+
+Symbol: its_okay22
+   Definitions
+      At line 231 in file enemy.s
+   Uses
+      At line 222 in file enemy.s
+      At line 226 in file enemy.s
+
+jump_this 0000032C
+
+Symbol: jump_this
+   Definitions
+      At line 361 in file enemy.s
+   Uses
+      At line 359 in file enemy.s
+Comment: jump_this used once
+keep_moving 000001A8
+
+Symbol: keep_moving
+   Definitions
+      At line 204 in file enemy.s
+   Uses
+      At line 198 in file enemy.s
+      At line 240 in file enemy.s
+      At line 248 in file enemy.s
+      At line 255 in file enemy.s
+
+keep_moving2 000000FC
+
+Symbol: keep_moving2
+   Definitions
+      At line 116 in file enemy.s
+   Uses
+      None
+Comment: keep_moving2 unused
+left_done_with_all_row_movement_once 000004FC
+
+Symbol: left_done_with_all_row_movement_once
+   Definitions
+      At line 547 in file enemy.s
+   Uses
+      At line 474 in file enemy.s
+Comment: left_done_with_all_row_movement_once used once
+left_every_enemy_has_shifted_one_position 000004E8
+
+Symbol: left_every_enemy_has_shifted_one_position
+   Definitions
+      At line 537 in file enemy.s
+   Uses
+      At line 487 in file enemy.s
+      At line 500 in file enemy.s
+
+left_its_okay 000004A8
+
+
+
+ARM Macro Assembler    Page 6 Alphabetic symbol ordering
+Relocatable symbols
+
+
+Symbol: left_its_okay
+   Definitions
+      At line 507 in file enemy.s
+   Uses
+      At line 503 in file enemy.s
+Comment: left_its_okay used once
+left_its_okay22 000004B8
+
+Symbol: left_its_okay22
+   Definitions
+      At line 513 in file enemy.s
+   Uses
+      At line 510 in file enemy.s
+Comment: left_its_okay22 used once
+left_its_okay222 000004C4
+
+Symbol: left_its_okay222
+   Definitions
+      At line 519 in file enemy.s
+   Uses
+      At line 505 in file enemy.s
+      At line 512 in file enemy.s
+      At line 516 in file enemy.s
+
+left_keep_moving 00000464
+
+Symbol: left_keep_moving
+   Definitions
+      At line 480 in file enemy.s
+   Uses
+      At line 470 in file enemy.s
+      At line 528 in file enemy.s
+      At line 535 in file enemy.s
+
+left_next_row 00000448
+
+Symbol: left_next_row
+   Definitions
+      At line 471 in file enemy.s
+   Uses
+      At line 545 in file enemy.s
+Comment: left_next_row used once
+left_speical_case_store_space_into_enemyoffset 000004D4
+
+Symbol: left_speical_case_store_space_into_enemyoffset
+   Definitions
+      At line 530 in file enemy.s
+   Uses
+      At line 489 in file enemy.s
+Comment: left_speical_case_store_space_into_enemyoffset used once
+line_1_movable 0000068C
+
+Symbol: line_1_movable
+   Definitions
+      At line 721 in file enemy.s
+   Uses
+      At line 718 in file enemy.s
+Comment: line_1_movable used once
+
+
+
+ARM Macro Assembler    Page 7 Alphabetic symbol ordering
+Relocatable symbols
+
+line_2_movable 000006A4
+
+Symbol: line_2_movable
+   Definitions
+      At line 730 in file enemy.s
+   Uses
+      At line 726 in file enemy.s
+Comment: line_2_movable used once
+line_3_movable 000006BC
+
+Symbol: line_3_movable
+   Definitions
+      At line 739 in file enemy.s
+   Uses
+      At line 735 in file enemy.s
+Comment: line_3_movable used once
+line_4_movable 000006D4
+
+Symbol: line_4_movable
+   Definitions
+      At line 748 in file enemy.s
+   Uses
+      At line 744 in file enemy.s
+Comment: line_4_movable used once
+line_5_movable 000006EC
+
+Symbol: line_5_movable
+   Definitions
+      At line 757 in file enemy.s
+   Uses
+      At line 753 in file enemy.s
+Comment: line_5_movable used once
+line_6_movable 00000704
+
+Symbol: line_6_movable
+   Definitions
+      At line 766 in file enemy.s
+   Uses
+      At line 762 in file enemy.s
+Comment: line_6_movable used once
+line_7_movable 0000071C
+
+Symbol: line_7_movable
+   Definitions
+      At line 775 in file enemy.s
+   Uses
+      At line 771 in file enemy.s
+Comment: line_7_movable used once
+line_8_movable 00000734
+
+Symbol: line_8_movable
+   Definitions
+      At line 784 in file enemy.s
+   Uses
+      At line 780 in file enemy.s
+Comment: line_8_movable used once
+next_row 00000174
+
+Symbol: next_row
+
+
+
+ARM Macro Assembler    Page 8 Alphabetic symbol ordering
+Relocatable symbols
+
+   Definitions
+      At line 180 in file enemy.s
+   Uses
+      At line 175 in file enemy.s
+      At line 266 in file enemy.s
+      At line 274 in file enemy.s
+
+no_exception_okay 000001BC
+
+Symbol: no_exception_okay
+   Definitions
+      At line 213 in file enemy.s
+   Uses
+      None
+Comment: no_exception_okay unused
+not_wall_copy 000005D0
+
+Symbol: not_wall_copy
+   Definitions
+      At line 637 in file enemy.s
+   Uses
+      At line 635 in file enemy.s
+Comment: not_wall_copy used once
+not_x_copy 000005C4
+
+Symbol: not_x_copy
+   Definitions
+      At line 633 in file enemy.s
+   Uses
+      At line 631 in file enemy.s
+Comment: not_x_copy used once
+one_col_is_done_next_col_ready 00000344
+
+Symbol: one_col_is_done_next_col_ready
+   Definitions
+      At line 369 in file enemy.s
+   Uses
+      At line 356 in file enemy.s
+Comment: one_col_is_done_next_col_ready used once
+one_row_done_next_row_ready 000005E0
+
+Symbol: one_row_done_next_row_ready
+   Definitions
+      At line 649 in file enemy.s
+   Uses
+      At line 628 in file enemy.s
+Comment: one_row_done_next_row_ready used once
+reached_right_wall 00000270
+
+Symbol: reached_right_wall
+   Definitions
+      At line 289 in file enemy.s
+   Uses
+      At line 160 in file enemy.s
+Comment: reached_right_wall used once
+ready_tocall_enemy_motioning_right 00000600
+
+Symbol: ready_tocall_enemy_motioning_right
+   Definitions
+
+
+
+ARM Macro Assembler    Page 9 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 666 in file enemy.s
+   Uses
+      At line 652 in file enemy.s
+Comment: ready_tocall_enemy_motioning_right used once
+repeating 00000158
+
+Symbol: repeating
+   Definitions
+      At line 171 in file enemy.s
+   Uses
+      At line 179 in file enemy.s
+Comment: repeating used once
+row_empty_next 000004E8
+
+Symbol: row_empty_next
+   Definitions
+      At line 540 in file enemy.s
+   Uses
+      At line 544 in file enemy.s
+Comment: row_empty_next used once
+row_has_0_enemy 00000224
+
+Symbol: row_has_0_enemy
+   Definitions
+      At line 262 in file enemy.s
+   Uses
+      At line 272 in file enemy.s
+Comment: row_has_0_enemy used once
+shifts_left 00000120
+
+Symbol: shifts_left
+   Definitions
+      At line 133 in file enemy.s
+   Uses
+      At line 123 in file enemy.s
+Comment: shifts_left used once
+speical_case_store_space_into_enemyoffset 00000204
+
+Symbol: speical_case_store_space_into_enemyoffset
+   Definitions
+      At line 250 in file enemy.s
+   Uses
+      At line 209 in file enemy.s
+Comment: speical_case_store_space_into_enemyoffset used once
+stop_it 000003BC
+
+Symbol: stop_it
+   Definitions
+      At line 414 in file enemy.s
+   Uses
+      At line 284 in file enemy.s
+      At line 287 in file enemy.s
+
+61 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Absolute symbols
+
+address_of_5counts 400077F0
+
+Symbol: address_of_5counts
+   Definitions
+      At line 41 in file enemy.s
+   Uses
+      At line 46 in file enemy.s
+Comment: address_of_5counts used once
+enemy2counts 40007280
+
+Symbol: enemy2counts
+   Definitions
+      At line 22 in file enemy.s
+   Uses
+      At line 79 in file enemy.s
+      At line 330 in file enemy.s
+      At line 590 in file enemy.s
+
+enemy2offset 40007130
+
+Symbol: enemy2offset
+   Definitions
+      At line 16 in file enemy.s
+   Uses
+      At line 64 in file enemy.s
+      At line 327 in file enemy.s
+      At line 398 in file enemy.s
+      At line 435 in file enemy.s
+      At line 589 in file enemy.s
+      At line 683 in file enemy.s
+
+enemy3counts 40007290
+
+Symbol: enemy3counts
+   Definitions
+      At line 23 in file enemy.s
+   Uses
+      At line 81 in file enemy.s
+      At line 322 in file enemy.s
+      At line 584 in file enemy.s
+
+enemy3offset 40007140
+
+Symbol: enemy3offset
+   Definitions
+      At line 17 in file enemy.s
+   Uses
+      At line 67 in file enemy.s
+      At line 319 in file enemy.s
+      At line 394 in file enemy.s
+      At line 441 in file enemy.s
+      At line 583 in file enemy.s
+      At line 678 in file enemy.s
+
+enemy4counts 400072A0
+
+Symbol: enemy4counts
+   Definitions
+      At line 24 in file enemy.s
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Absolute symbols
+
+   Uses
+      At line 83 in file enemy.s
+      At line 313 in file enemy.s
+      At line 578 in file enemy.s
+
+enemy4offset 40007150
+
+Symbol: enemy4offset
+   Definitions
+      At line 18 in file enemy.s
+   Uses
+      At line 70 in file enemy.s
+      At line 310 in file enemy.s
+      At line 390 in file enemy.s
+      At line 447 in file enemy.s
+      At line 577 in file enemy.s
+      At line 673 in file enemy.s
+
+enemy5counts 400072B0
+
+Symbol: enemy5counts
+   Definitions
+      At line 25 in file enemy.s
+   Uses
+      At line 85 in file enemy.s
+      At line 303 in file enemy.s
+      At line 572 in file enemy.s
+
+enemy5offset 40007160
+
+Symbol: enemy5offset
+   Definitions
+      At line 19 in file enemy.s
+   Uses
+      At line 73 in file enemy.s
+      At line 300 in file enemy.s
+      At line 385 in file enemy.s
+      At line 453 in file enemy.s
+      At line 571 in file enemy.s
+      At line 668 in file enemy.s
+
+enemycounts 40007270
+
+Symbol: enemycounts
+   Definitions
+      At line 21 in file enemy.s
+   Uses
+      At line 76 in file enemy.s
+      At line 167 in file enemy.s
+      At line 338 in file enemy.s
+      At line 465 in file enemy.s
+      At line 596 in file enemy.s
+
+enemyoffset 40007120
+
+Symbol: enemyoffset
+   Definitions
+      At line 15 in file enemy.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Absolute symbols
+
+      At line 61 in file enemy.s
+      At line 166 in file enemy.s
+      At line 335 in file enemy.s
+      At line 402 in file enemy.s
+      At line 429 in file enemy.s
+      At line 464 in file enemy.s
+      At line 595 in file enemy.s
+      At line 688 in file enemy.s
+
+flagof_just_reached_left_wall 4000700F
+
+Symbol: flagof_just_reached_left_wall
+   Definitions
+      At line 42 in file enemy.s
+   Uses
+      At line 50 in file enemy.s
+      At line 191 in file enemy.s
+      At line 281 in file enemy.s
+      At line 563 in file enemy.s
+      At line 837 in file enemy.s
+
+left_right_dir_flag 400072F0
+
+Symbol: left_right_dir_flag
+   Definitions
+      At line 40 in file enemy.s
+   Uses
+      At line 54 in file enemy.s
+      At line 119 in file enemy.s
+      At line 407 in file enemy.s
+      At line 693 in file enemy.s
+
+offset2_hit_counts 40007510
+
+Symbol: offset2_hit_counts
+   Definitions
+      At line 34 in file enemy.s
+   Uses
+      At line 103 in file enemy.s
+      At line 329 in file enemy.s
+      At line 805 in file enemy.s
+
+offset3_hit_counts 40007520
+
+Symbol: offset3_hit_counts
+   Definitions
+      At line 35 in file enemy.s
+   Uses
+      At line 105 in file enemy.s
+      At line 321 in file enemy.s
+      At line 813 in file enemy.s
+
+offset4_hit_counts 40007530
+
+Symbol: offset4_hit_counts
+   Definitions
+      At line 36 in file enemy.s
+   Uses
+      At line 107 in file enemy.s
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+Absolute symbols
+
+      At line 312 in file enemy.s
+      At line 821 in file enemy.s
+
+offset5_hit_counts 40007540
+
+Symbol: offset5_hit_counts
+   Definitions
+      At line 37 in file enemy.s
+   Uses
+      At line 109 in file enemy.s
+      At line 302 in file enemy.s
+      At line 829 in file enemy.s
+
+offset_hit_counts 40007500
+
+Symbol: offset_hit_counts
+   Definitions
+      At line 33 in file enemy.s
+   Uses
+      At line 100 in file enemy.s
+      At line 169 in file enemy.s
+      At line 337 in file enemy.s
+      At line 802 in file enemy.s
+
+promptoffset 40007100
+
+Symbol: promptoffset
+   Definitions
+      At line 39 in file enemy.s
+   Uses
+      At line 58 in file enemy.s
+      At line 127 in file enemy.s
+      At line 138 in file enemy.s
+      At line 610 in file enemy.s
+      At line 712 in file enemy.s
+
+right_enemy2counts 40007380
+
+Symbol: right_enemy2counts
+   Definitions
+      At line 28 in file enemy.s
+   Uses
+      At line 91 in file enemy.s
+Comment: right_enemy2counts used once
+right_enemy3counts 40007390
+
+Symbol: right_enemy3counts
+   Definitions
+      At line 29 in file enemy.s
+   Uses
+      At line 93 in file enemy.s
+Comment: right_enemy3counts used once
+right_enemy4counts 400073A0
+
+Symbol: right_enemy4counts
+   Definitions
+      At line 30 in file enemy.s
+   Uses
+      At line 95 in file enemy.s
+
+
+
+ARM Macro Assembler    Page 5 Alphabetic symbol ordering
+Absolute symbols
+
+Comment: right_enemy4counts used once
+right_enemy5counts 400073B0
+
+Symbol: right_enemy5counts
+   Definitions
+      At line 31 in file enemy.s
+   Uses
+      At line 97 in file enemy.s
+Comment: right_enemy5counts used once
+right_enemycounts 40007370
+
+Symbol: right_enemycounts
+   Definitions
+      At line 27 in file enemy.s
+   Uses
+      At line 88 in file enemy.s
+      At line 168 in file enemy.s
+
+24 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+External symbols
+
+FIQ_Handler 00000000
+
+Symbol: FIQ_Handler
+   Definitions
+      At line 6 in file enemy.s
+   Uses
+      None
+Comment: FIQ_Handler unused
+div_and_mod 00000000
+
+Symbol: div_and_mod
+   Definitions
+      At line 12 in file enemy.s
+   Uses
+      At line 616 in file enemy.s
+Comment: div_and_mod used once
+newline 00000000
+
+Symbol: newline
+   Definitions
+      At line 10 in file enemy.s
+   Uses
+      None
+Comment: newline unused
+output_string 00000000
+
+Symbol: output_string
+   Definitions
+      At line 9 in file enemy.s
+   Uses
+      At line 129 in file enemy.s
+      At line 140 in file enemy.s
+
+update_map 00000000
+
+Symbol: update_map
+   Definitions
+      At line 7 in file enemy.s
+   Uses
+      None
+Comment: update_map unused
+5 symbols
+424 symbols in table

@@ -1,0 +1,907 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000                 AREA             GPIO, CODE, READWRITE
+    2 00000000         
+    3 00000000         
+    4 00000000                 EXPORT           read_character
+    5 00000000                 EXPORT           output_character
+    6 00000000                 EXPORT           read_string
+    7 00000000                 EXPORT           output_string
+    8 00000000                 EXPORT           newline
+    9 00000000                 EXPORT           pin_connect_block_setup_for_uar
+t0
+   10 00000000                 EXPORT           uart_init
+   11 00000000                 EXPORT           rng
+   12 00000000                 EXPORT           div_and_mod
+   13 00000000                 EXTERN           end_of_code
+   14 00000000         
+   15 00000000 E0028004 
+                       IO0SET  EQU              0xE0028004
+   16 00000000 E002800C 
+                       IO0CLR  EQU              0xE002800C
+   17 00000000 E0028008 
+                       IO0DIR  EQU              0xE0028008
+   18 00000000 E0028000 
+                       IO0PIN  EQU              0xE0028000
+   19 00000000         
+   20 00000000 E0028014 
+                       IO1SET  EQU              0xE0028014
+   21 00000000 E002801C 
+                       IO1CLR  EQU              0xE002801C
+   22 00000000 E0028018 
+                       IO1DIR  EQU              0xE0028018
+   23 00000000 E0028010 
+                       IO1PIN  EQU              0xE0028010
+   24 00000000         
+   25 00000000 E000C014 
+                       U0LSR   EQU              0xE000C014
+   26 00000000 E000C000 
+                       U0TRR   EQU              0xE000C000
+   27 00000000 E000C004 
+                       UART0   EQU              0xE000C004  ;uart0 interrupt en
+                                                            abler
+   28 00000000         
+   29 00000000 E0004004 
+                       T0TCR   EQU              0xE0004004  ; Timer control reg
+                                                            ister use to contro
+                                                            l TC (time count)
+   30 00000000 E0004008 
+                       T0TC    EQU              0xE0004008  ; Time count  
+   31 00000000 E0004014 
+                       T0MCR   EQU              0xE0004014  ; Determines if an 
+                                                            interrupt is genera
+                                                            ted and if the Time
+                                                             Count (TC)
+   32 00000000 E0004000 
+                       T0IR    EQU              0xE0004000  ;  
+   33 00000000 E000401C 
+                       T0MR1   EQU              0xE000401C  ;match register
+   34 00000000         
+   35 00000000 E0008000 
+                       T1IR    EQU              0xE0008000
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+   36 00000000 E0008014 
+                       T1MCR   EQU              0xE0008014
+   37 00000000 E0008008 
+                       T1TC    EQU              0xE0008008
+   38 00000000 E0008004 
+                       T1TCR   EQU              0xE0008004
+   39 00000000 E000801C 
+                       T1MR1   EQU              0xE000801C  ; Match Register
+   40 00000000         
+   41 00000000 40000200 
+                       current_level
+                               EQU              0x40000200
+   42 00000000 40000000 
+                       store_read_address
+                               EQU              0x40000000
+   43 00000000 40004000 
+                       stateaddress
+                               EQU              0x40004000
+   44 00000000 40000100 
+                       previous_led_display
+                               EQU              0x40000100
+   45 00000000         
+   46 00000000 40007990 
+                       keystork_rng_counter
+                               EQU              0x40007990
+   47 00000000 40007994 
+                       current_keyboard_rng_input
+                               EQU              0x40007994
+   48 00000000         
+   49 00000000 40007000 
+                       digit_1000
+                               EQU              0x40007000
+   50 00000000 40007010 
+                       digit_100
+                               EQU              0x40007010
+   51 00000000 40007020 
+                       digit_10
+                               EQU              0x40007020
+   52 00000000 40007030 
+                       digit_1 EQU              0x40007030
+   53 00000000         
+   54 00000000 40005040 
+                       strobing_flag
+                               EQU              0x40005040
+   55 00000000         
+   56 00000000         rng
+   57 00000000 E92D4183        STMFD            SP!,{r0-r1,r7,r8,lr}
+   58 00000004         
+   59 00000004 E59F01D4        LDR              r0, =T0TC
+   60 00000008 E5901000        LDR              r1, [r0]
+   61 0000000C E3E020FF        LDR              r2, =0xFFFFFF00
+   62 00000010 E1C11002        BIC              r1, r1 , r2
+   63 00000014         
+   64 00000014 E59F01C8        LDR              r0, =keystork_rng_counter
+   65 00000018 E5902000        LDR              r2, [r0]
+   66 0000001C E0811002        ADD              r1, r1 ,r2
+   67 00000020         
+   68 00000020 E59F01C0        LDR              r0, =current_keyboard_rng_input
+   69 00000024 E5902000        LDR              r2, [r0]
+
+
+
+ARM Macro Assembler    Page 3 
+
+
+   70 00000028 E0811002        ADD              r1, r1 ,r2
+   71 0000002C         
+   72 0000002C E3E020FF        LDR              r2, =0xFFFFFF00
+   73 00000030 E1C11002        BIC              r1, r1 , r2
+   74 00000034         
+   75 00000034         
+   76 00000034         
+   77 00000034         
+   78 00000034 E1A0800B        MOV              r8, r11     ; immediates enters
+                                                             here shows the ran
+                                                            ge of random number
+                                                            s
+   79 00000038         
+   80 00000038         continue_subb
+   81 00000038         
+   82 00000038 E1510008        CMP              r1, r8
+   83 0000003C BA000001        BLT              done_diving
+   84 00000040         
+   85 00000040 E0411008        SUB              r1, r1, r8
+   86 00000044 EAFFFFFB        B                continue_subb
+   87 00000048         
+   88 00000048         done_diving
+   89 00000048 E1A0C001        MOV              r12 , r1
+   90 0000004C         
+   91 0000004C E8BD4183        LDMFD            SP!,{r0-r1,r7,r8,lr}
+   92 00000050 E12FFF1E        BX               lr
+   93 00000054         
+   94 00000054         
+   95 00000054         newline
+   96 00000054 E92D4000        STMFD            SP!,{lr}    ; Store register lr
+                                                             on stack
+   97 00000058 E3A0100A        MOV              r1, #0xA
+   98 0000005C EBFFFFFE        BL               output_character
+   99 00000060 E3A0100D        MOV              r1, #0xD
+  100 00000064 EBFFFFFE        BL               output_character
+  101 00000068         ;MOV r1, #0x32
+  102 00000068         ;BL output_character ;delete this line
+  103 00000068 E8BD4000        LDMFD            sp!, {lr}
+  104 0000006C E12FFF1E        BX               lr
+  105 00000070         
+  106 00000070         read_character
+  107 00000070 E92D400F        STMFD            SP!,{r0-r3,lr}
+  108 00000074 E59F0170        LDR              r0, =U0LSR
+  109 00000078 E59F2170        LDR              r2, =U0TRR
+  110 0000007C         LOOP_readchar
+  111 0000007C         
+  112 0000007C E5D01000        LDRB             r1, [r0]
+  113 00000080 E2013001        AND              r3, r1, #1
+  114 00000084 E3530000        CMP              r3, #0
+  115 00000088 0AFFFFFB        BEQ              LOOP_readchar
+  116 0000008C E5D21000        LDRB             r1, [r2]
+  117 00000090         
+  118 00000090 EBFFFFFE        BL               output_character
+  119 00000094         
+  120 00000094 E8BD400F        LDMFD            sp!, {r0-r3,lr}
+  121 00000098 E12FFF1E        BX               lr
+  122 0000009C         
+  123 0000009C         output_character
+  124 0000009C E92D400F        STMFD            SP!,{r0-r3,lr}
+
+
+
+ARM Macro Assembler    Page 4 
+
+
+  125 000000A0 E59F0144        LDR              r0, =U0LSR
+  126 000000A4         LOOP_outchar
+  127 000000A4 E5D02000        LDRB             r2, [r0]
+  128 000000A8 E2023020        AND              r3, r2, #32
+  129 000000AC E3530000        CMP              r3, #0
+  130 000000B0 0AFFFFFB        BEQ              LOOP_outchar
+  131 000000B4         
+  132 000000B4         not_enters
+  133 000000B4 E59F0134        LDR              r0, =U0TRR
+  134 000000B8 E5C01000        STRB             r1, [r0]
+  135 000000BC E8BD400F        LDMFD            sp!, {r0-r3,lr}
+  136 000000C0 E12FFF1E        BX               lr
+  137 000000C4         
+  138 000000C4         output_string
+  139 000000C4 E92D4003        STMFD            SP!, {r0-r1,lr}
+  140 000000C8         LOOP_outstr
+  141 000000C8 E4D01001        LDRB             r1, [r0], #1
+  142 000000CC E3510000        CMP              r1, #0
+  143 000000D0 1A000000        BNE              outPrompt
+  144 000000D4 EA000007        B                STOP
+  145 000000D8         outPrompt
+  146 000000D8         
+  147 000000D8         
+  148 000000D8         
+  149 000000D8 E59F410C        LDR              r4, =U0LSR
+  150 000000DC         LOOP_outchar2
+  151 000000DC E5D42000        LDRB             r2, [r4]
+  152 000000E0 E2023020        AND              r3, r2, #32
+  153 000000E4 E3530000        CMP              r3, #0
+  154 000000E8 0AFFFFFB        BEQ              LOOP_outchar2
+  155 000000EC         
+  156 000000EC E59F40FC        LDR              r4, =U0TRR
+  157 000000F0 E5C41000        STRB             r1, [r4]
+  158 000000F4         
+  159 000000F4 EAFFFFF3        B                LOOP_outstr
+  160 000000F8         
+  161 000000F8         STOP
+  162 000000F8 E8BD4003        LDMFD            sp!, {r0-r1,lr}
+  163 000000FC E12FFF1E        BX               lr
+  164 00000100         
+  165 00000100         read_string
+  166 00000100 E92D4000        STMFD            SP!,{lr}
+  167 00000104 E3A00101        LDR              r0 , =store_read_address
+  168 00000108         LOOP_readstr
+  169 00000108 EBFFFFFE        BL               read_character
+  170 0000010C E3510051        CMP              r1, #0x51
+  171 00000110 0AFFFFFE        BEQ              end_of_code
+  172 00000114 E4D01001        LDRB             r1, [r0], #1
+  173 00000118 EAFFFFFA        B                LOOP_readstr
+  174 0000011C E8BD4000        LDMFD            sp!, {lr}
+  175 00000120 E12FFF1E        BX               lr
+  176 00000124         
+  177 00000124         uart_init
+  178 00000124 E92D4003        STMFD            sp!, {r0-r1,lr}
+  179 00000128 E59F00C4        LDR              r0, =0xE000C00C
+  180 0000012C E3A01083        MOV              r1, #131
+  181 00000130 E5C01000        STRB             r1, [r0]
+  182 00000134         
+  183 00000134 E59F00B4        LDR              r0, =0xE000C000
+
+
+
+ARM Macro Assembler    Page 5 
+
+
+  184 00000138 E3A01001        MOV              r1, #1
+  185 0000013C E5C01000        STRB             r1, [r0]
+  186 00000140         
+  187 00000140 E59F00B0        LDR              r0, =0xE000C004
+  188 00000144 E3A01000        MOV              r1, #0
+  189 00000148 E5C01000        STRB             r1, [r0]
+  190 0000014C         
+  191 0000014C E59F00A0        LDR              r0, =0xE000C00C
+  192 00000150 E3A01003        MOV              r1, #3
+  193 00000154 E5C01000        STRB             r1, [r0]
+  194 00000158 E8BD4003        LDMFD            sp!, {r0-r1,lr}
+  195 0000015C E12FFF1E        BX               lr
+  196 00000160         
+  197 00000160         
+  198 00000160         div_and_mod
+  199 00000160         ; The dividend is passed in r1 and the divisor in r0.
+  200 00000160         ; The quotient is returned in r0 and the remainder in r1
+                       . 
+  201 00000160 E1A01007        MOV              r1, r7
+  202 00000164 E1A00008        MOV              r0, r8
+  203 00000168 E3A02010        MOV              r2, #16     ;initialize counter
+                                                             to 16
+  204 0000016C E3A03000        MOV              r3, #0      ;initialize quotien
+                                                            t to 0 
+  205 00000170         
+  206 00000170 E1A00800        MOV              r0, r0, LSL #16 ;logical shift 
+                                                            left divisor 16 pla
+                                                            ces
+  207 00000174 E1A04001        MOV              r4, r1      ;Initialize Remaind
+                                                            er to dividend
+  208 00000178         
+  209 00000178 E0444000 
+                       DEC     SUB              r4, r4, r0  ;remainder = remain
+                                                            der - divisor
+  210 0000017C E3540000        CMP              r4, #0      ;comparing remainde
+                                                            r to 0
+  211 00000180 BA000002        BLT              TRU         ;remainder is less 
+                                                            than 0
+  212 00000184         
+  213 00000184 E1A03083        MOV              r3, r3, LSL #1 ;Left shit quoti
+                                                            ent LSB = 1
+  214 00000188 E2833001        ADD              r3, r3, #1  ;adding 1 to make L
+                                                            SB = 1
+  215 0000018C EA000002        B                RSD
+  216 00000190         
+  217 00000190 E0844000 
+                       TRU     ADD              r4, r4, r0  ;restore remainder.
+                                                            
+  218 00000194 E1A03083        MOV              r3, r3, LSL #1 ;left shit in 0 
+                                                            to quotient
+  219 00000198 EAFFFFFF        B                RSD
+  220 0000019C         
+  221 0000019C E1A000A0 
+                       RSD     MOV              r0, r0, LSR #1 ;right shift div
+                                                            isor = 0
+  222 000001A0 E3520000        CMP              r2, #0      ;comparing counter
+  223 000001A4 CA000000        BGT              CNT         ;
+  224 000001A8 EA000001        B                DONE        ; sign first step
+  225 000001AC         
+
+
+
+ARM Macro Assembler    Page 6 
+
+
+  226 000001AC E2422001 
+                       CNT     SUB              r2, r2, #1  ;decrementing count
+                                                            er
+  227 000001B0 CAFFFFF0        BGT              DEC
+  228 000001B4         
+  229 000001B4         
+  230 000001B4 E1A00003 
+                       DONE    MOV              r0, r3      ;return quotient in
+                                                            to r0
+  231 000001B8 E1A01004        MOV              r1, r4      ;return remainder t
+                                                            o r1
+  232 000001BC         
+  233 000001BC E12FFF1E        BX               lr
+  234 000001C0         
+  235 000001C0         pin_connect_block_setup_for_uart0
+  236 000001C0 E92D4003        STMFD            sp!, {r0, r1, lr}
+  237 000001C4 E59F0030        LDR              r0, =0xE002C000 ; PINSEL0
+  238 000001C8 E5901000        LDR              r1, [r0]
+  239 000001CC E3811005        ORR              r1, r1, #5
+  240 000001D0 E3C1100A        BIC              r1, r1, #0xA
+  241 000001D4 E5801000        STR              r1, [r0]
+  242 000001D8 E8BD4003        LDMFD            sp!, {r0, r1, lr}
+  243 000001DC E12FFF1E        BX               lr
+  244 000001E0         
+  245 000001E0         
+  246 000001E0         
+  247 000001E0                 END
+              E0004008 
+              40007990 
+              40007994 
+              E000C014 
+              E000C000 
+              E000C00C 
+              E000C004 
+              E002C000 
+Command Line: --debug --xref --diag_suppress=9931 --apcs=interwork --depend=.\o
+bjects\library.d -o.\objects\library.o -IC:\Keil_v5\ARM\RV31\INC -IC:\Keil_v5\A
+RM\CMSIS\Include -IC:\Keil_v5\ARM\Inc\Philips --predefine="__EVAL SETA 1" --pre
+define="__UVISION_VERSION SETA 518" --list=.\listings\library.lst library.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+CNT 000001AC
+
+Symbol: CNT
+   Definitions
+      At line 226 in file library.s
+   Uses
+      At line 223 in file library.s
+Comment: CNT used once
+DEC 00000178
+
+Symbol: DEC
+   Definitions
+      At line 209 in file library.s
+   Uses
+      At line 227 in file library.s
+Comment: DEC used once
+DONE 000001B4
+
+Symbol: DONE
+   Definitions
+      At line 230 in file library.s
+   Uses
+      At line 224 in file library.s
+Comment: DONE used once
+GPIO 00000000
+
+Symbol: GPIO
+   Definitions
+      At line 1 in file library.s
+   Uses
+      None
+Comment: GPIO unused
+LOOP_outchar 000000A4
+
+Symbol: LOOP_outchar
+   Definitions
+      At line 126 in file library.s
+   Uses
+      At line 130 in file library.s
+Comment: LOOP_outchar used once
+LOOP_outchar2 000000DC
+
+Symbol: LOOP_outchar2
+   Definitions
+      At line 150 in file library.s
+   Uses
+      At line 154 in file library.s
+Comment: LOOP_outchar2 used once
+LOOP_outstr 000000C8
+
+Symbol: LOOP_outstr
+   Definitions
+      At line 140 in file library.s
+   Uses
+      At line 159 in file library.s
+Comment: LOOP_outstr used once
+LOOP_readchar 0000007C
+
+Symbol: LOOP_readchar
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Relocatable symbols
+
+   Definitions
+      At line 110 in file library.s
+   Uses
+      At line 115 in file library.s
+Comment: LOOP_readchar used once
+LOOP_readstr 00000108
+
+Symbol: LOOP_readstr
+   Definitions
+      At line 168 in file library.s
+   Uses
+      At line 173 in file library.s
+Comment: LOOP_readstr used once
+RSD 0000019C
+
+Symbol: RSD
+   Definitions
+      At line 221 in file library.s
+   Uses
+      At line 215 in file library.s
+      At line 219 in file library.s
+
+STOP 000000F8
+
+Symbol: STOP
+   Definitions
+      At line 161 in file library.s
+   Uses
+      At line 144 in file library.s
+Comment: STOP used once
+TRU 00000190
+
+Symbol: TRU
+   Definitions
+      At line 217 in file library.s
+   Uses
+      At line 211 in file library.s
+Comment: TRU used once
+continue_subb 00000038
+
+Symbol: continue_subb
+   Definitions
+      At line 80 in file library.s
+   Uses
+      At line 86 in file library.s
+Comment: continue_subb used once
+div_and_mod 00000160
+
+Symbol: div_and_mod
+   Definitions
+      At line 198 in file library.s
+   Uses
+      At line 12 in file library.s
+Comment: div_and_mod used once
+done_diving 00000048
+
+Symbol: done_diving
+   Definitions
+      At line 88 in file library.s
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Relocatable symbols
+
+   Uses
+      At line 83 in file library.s
+Comment: done_diving used once
+newline 00000054
+
+Symbol: newline
+   Definitions
+      At line 95 in file library.s
+   Uses
+      At line 8 in file library.s
+Comment: newline used once
+not_enters 000000B4
+
+Symbol: not_enters
+   Definitions
+      At line 132 in file library.s
+   Uses
+      None
+Comment: not_enters unused
+outPrompt 000000D8
+
+Symbol: outPrompt
+   Definitions
+      At line 145 in file library.s
+   Uses
+      At line 143 in file library.s
+Comment: outPrompt used once
+output_character 0000009C
+
+Symbol: output_character
+   Definitions
+      At line 123 in file library.s
+   Uses
+      At line 5 in file library.s
+      At line 98 in file library.s
+      At line 100 in file library.s
+      At line 118 in file library.s
+
+output_string 000000C4
+
+Symbol: output_string
+   Definitions
+      At line 138 in file library.s
+   Uses
+      At line 7 in file library.s
+Comment: output_string used once
+pin_connect_block_setup_for_uart0 000001C0
+
+Symbol: pin_connect_block_setup_for_uart0
+   Definitions
+      At line 235 in file library.s
+   Uses
+      At line 9 in file library.s
+Comment: pin_connect_block_setup_for_uart0 used once
+read_character 00000070
+
+Symbol: read_character
+   Definitions
+      At line 106 in file library.s
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+Relocatable symbols
+
+   Uses
+      At line 4 in file library.s
+      At line 169 in file library.s
+
+read_string 00000100
+
+Symbol: read_string
+   Definitions
+      At line 165 in file library.s
+   Uses
+      At line 6 in file library.s
+Comment: read_string used once
+rng 00000000
+
+Symbol: rng
+   Definitions
+      At line 56 in file library.s
+   Uses
+      At line 11 in file library.s
+Comment: rng used once
+uart_init 00000124
+
+Symbol: uart_init
+   Definitions
+      At line 177 in file library.s
+   Uses
+      At line 10 in file library.s
+Comment: uart_init used once
+25 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Absolute symbols
+
+IO0CLR E002800C
+
+Symbol: IO0CLR
+   Definitions
+      At line 16 in file library.s
+   Uses
+      None
+Comment: IO0CLR unused
+IO0DIR E0028008
+
+Symbol: IO0DIR
+   Definitions
+      At line 17 in file library.s
+   Uses
+      None
+Comment: IO0DIR unused
+IO0PIN E0028000
+
+Symbol: IO0PIN
+   Definitions
+      At line 18 in file library.s
+   Uses
+      None
+Comment: IO0PIN unused
+IO0SET E0028004
+
+Symbol: IO0SET
+   Definitions
+      At line 15 in file library.s
+   Uses
+      None
+Comment: IO0SET unused
+IO1CLR E002801C
+
+Symbol: IO1CLR
+   Definitions
+      At line 21 in file library.s
+   Uses
+      None
+Comment: IO1CLR unused
+IO1DIR E0028018
+
+Symbol: IO1DIR
+   Definitions
+      At line 22 in file library.s
+   Uses
+      None
+Comment: IO1DIR unused
+IO1PIN E0028010
+
+Symbol: IO1PIN
+   Definitions
+      At line 23 in file library.s
+   Uses
+      None
+Comment: IO1PIN unused
+IO1SET E0028014
+
+Symbol: IO1SET
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Absolute symbols
+
+   Definitions
+      At line 20 in file library.s
+   Uses
+      None
+Comment: IO1SET unused
+T0IR E0004000
+
+Symbol: T0IR
+   Definitions
+      At line 32 in file library.s
+   Uses
+      None
+Comment: T0IR unused
+T0MCR E0004014
+
+Symbol: T0MCR
+   Definitions
+      At line 31 in file library.s
+   Uses
+      None
+Comment: T0MCR unused
+T0MR1 E000401C
+
+Symbol: T0MR1
+   Definitions
+      At line 33 in file library.s
+   Uses
+      None
+Comment: T0MR1 unused
+T0TC E0004008
+
+Symbol: T0TC
+   Definitions
+      At line 30 in file library.s
+   Uses
+      At line 59 in file library.s
+Comment: T0TC used once
+T0TCR E0004004
+
+Symbol: T0TCR
+   Definitions
+      At line 29 in file library.s
+   Uses
+      None
+Comment: T0TCR unused
+T1IR E0008000
+
+Symbol: T1IR
+   Definitions
+      At line 35 in file library.s
+   Uses
+      None
+Comment: T1IR unused
+T1MCR E0008014
+
+Symbol: T1MCR
+   Definitions
+      At line 36 in file library.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Absolute symbols
+
+      None
+Comment: T1MCR unused
+T1MR1 E000801C
+
+Symbol: T1MR1
+   Definitions
+      At line 39 in file library.s
+   Uses
+      None
+Comment: T1MR1 unused
+T1TC E0008008
+
+Symbol: T1TC
+   Definitions
+      At line 37 in file library.s
+   Uses
+      None
+Comment: T1TC unused
+T1TCR E0008004
+
+Symbol: T1TCR
+   Definitions
+      At line 38 in file library.s
+   Uses
+      None
+Comment: T1TCR unused
+U0LSR E000C014
+
+Symbol: U0LSR
+   Definitions
+      At line 25 in file library.s
+   Uses
+      At line 108 in file library.s
+      At line 125 in file library.s
+      At line 149 in file library.s
+
+U0TRR E000C000
+
+Symbol: U0TRR
+   Definitions
+      At line 26 in file library.s
+   Uses
+      At line 109 in file library.s
+      At line 133 in file library.s
+      At line 156 in file library.s
+
+UART0 E000C004
+
+Symbol: UART0
+   Definitions
+      At line 27 in file library.s
+   Uses
+      None
+Comment: UART0 unused
+current_keyboard_rng_input 40007994
+
+Symbol: current_keyboard_rng_input
+   Definitions
+      At line 47 in file library.s
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+Absolute symbols
+
+   Uses
+      At line 68 in file library.s
+Comment: current_keyboard_rng_input used once
+current_level 40000200
+
+Symbol: current_level
+   Definitions
+      At line 41 in file library.s
+   Uses
+      None
+Comment: current_level unused
+digit_1 40007030
+
+Symbol: digit_1
+   Definitions
+      At line 52 in file library.s
+   Uses
+      None
+Comment: digit_1 unused
+digit_10 40007020
+
+Symbol: digit_10
+   Definitions
+      At line 51 in file library.s
+   Uses
+      None
+Comment: digit_10 unused
+digit_100 40007010
+
+Symbol: digit_100
+   Definitions
+      At line 50 in file library.s
+   Uses
+      None
+Comment: digit_100 unused
+digit_1000 40007000
+
+Symbol: digit_1000
+   Definitions
+      At line 49 in file library.s
+   Uses
+      None
+Comment: digit_1000 unused
+keystork_rng_counter 40007990
+
+Symbol: keystork_rng_counter
+   Definitions
+      At line 46 in file library.s
+   Uses
+      At line 64 in file library.s
+Comment: keystork_rng_counter used once
+previous_led_display 40000100
+
+Symbol: previous_led_display
+   Definitions
+      At line 44 in file library.s
+   Uses
+      None
+Comment: previous_led_display unused
+
+
+
+ARM Macro Assembler    Page 5 Alphabetic symbol ordering
+Absolute symbols
+
+stateaddress 40004000
+
+Symbol: stateaddress
+   Definitions
+      At line 43 in file library.s
+   Uses
+      None
+Comment: stateaddress unused
+store_read_address 40000000
+
+Symbol: store_read_address
+   Definitions
+      At line 42 in file library.s
+   Uses
+      At line 167 in file library.s
+Comment: store_read_address used once
+strobing_flag 40005040
+
+Symbol: strobing_flag
+   Definitions
+      At line 54 in file library.s
+   Uses
+      None
+Comment: strobing_flag unused
+32 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+External symbols
+
+end_of_code 00000000
+
+Symbol: end_of_code
+   Definitions
+      At line 13 in file library.s
+   Uses
+      At line 171 in file library.s
+Comment: end_of_code used once
+1 symbol
+392 symbols in table

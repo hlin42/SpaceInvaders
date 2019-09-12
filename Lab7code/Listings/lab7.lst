@@ -1,0 +1,4321 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000                 AREA             interrupts, CODE, READWRITE
+    2 00000000                 EXPORT           lab7
+    3 00000000                 EXPORT           FIQ_Handler
+    4 00000000                 EXPORT           end_of_code
+    5 00000000                 EXPORT           update_map
+    6 00000000                 EXPORT           lab7_restart
+    7 00000000                 EXPORT           endgame
+    8 00000000         
+    9 00000000                 EXTERN           enemy_motion
+   10 00000000                 EXTERN           interrupt_init
+   11 00000000                 EXTERN           uart_init
+   12 00000000                 EXTERN           output_string
+   13 00000000                 EXTERN           read_character
+   14 00000000                 EXTERN           newline
+   15 00000000                 EXTERN           read_string
+   16 00000000                 EXTERN           seven_seg
+   17 00000000                 EXTERN           lights_up_1000_LED
+   18 00000000                 EXTERN           lights_up_100_LED
+   19 00000000                 EXTERN           lights_up_10_LED
+   20 00000000                 EXTERN           lights_up_1_LED
+   21 00000000                 EXTERN           rng
+   22 00000000         
+   23 00000000                 EXTERN           ship_setups
+   24 00000000                 EXTERN           ship_shift_left
+   25 00000000                 EXTERN           ship_shift_right
+   26 00000000         
+   27 00000000                 EXTERN           enemy_setups
+   28 00000000                 EXTERN           enemy_motioning_right
+   29 00000000                 EXTERN           enemy_motioning_left
+   30 00000000         
+   31 00000000                 EXTERN           proj_setups
+   32 00000000                 EXTERN           eject_proj
+   33 00000000                 EXTERN           proj_motion
+   34 00000000                 EXTERN           enemy_eject_proj
+   35 00000000         
+   36 00000000                 EXTERN           eject_enemy_proj
+   37 00000000                 EXTERN           enemy_proj_setups
+   38 00000000                 EXTERN           enemy_proj_motion
+   39 00000000         
+   40 00000000         
+   41 00000000                 EXTERN           mothership_setup
+   42 00000000                 EXTERN           mothership_starting_showup_left
+   43 00000000                 EXTERN           mothership_starting_showup_righ
+t
+   44 00000000                 EXTERN           mothership_right_move
+   45 00000000                 EXTERN           mothership_left_move
+   46 00000000                 EXTERN           output_character
+   47 00000000         
+   48 00000000 40007A10 
+                       score_location_1
+                               EQU              0x40007A10
+   49 00000000 40007A18 
+                       score_location_2
+                               EQU              0x40007A18
+   50 00000000 40007A20 
+                       score_location_3
+                               EQU              0x40007A20
+   51 00000000 40007A28 
+                       score_location_4
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+                               EQU              0x40007A28
+   52 00000000 40007A30 
+                       time_location_1
+                               EQU              0x40007A30
+   53 00000000 40007A38 
+                       time_location_2
+                               EQU              0x40007A38
+   54 00000000 40007A40 
+                       time_location_3
+                               EQU              0x40007A40
+   55 00000000         
+   56 00000000         
+   57 00000000 40005000 
+                       lives   EQU              0x40005000
+   58 00000000 40007370 
+                       right_enemycounts
+                               EQU              0x40007370
+   59 00000000 40007120 
+                       enemyoffset
+                               EQU              0x40007120
+   60 00000000 400074A0 
+                       enemy_proj_offset
+                               EQU              0x400074A0
+   61 00000000 400074B0 
+                       enemy_proj_on_board
+                               EQU              0x400074B0
+   62 00000000 E0028004 
+                       IO0SET  EQU              0xE0028004
+   63 00000000 E0028000 
+                       IO0PIN  EQU              0xE0028000
+   64 00000000 E002800C 
+                       IO0CLR  EQU              0xE002800C
+   65 00000000 E0028008 
+                       IO0DIR  EQU              0xE0028008
+   66 00000000 E0028014 
+                       IO1SET  EQU              0xE0028014
+   67 00000000 E0004018 
+                       T0MR0   EQU              0xE0004018  ; Match Register
+   68 00000000 E0004004 
+                       T0TCR   EQU              0xE0004004  ; Timer control reg
+                                                            ister use to contro
+                                                            l TC (time count)
+   69 00000000 E0004008 
+                       T0TC    EQU              0xE0004008  ; Time count  
+   70 00000000 E0004014 
+                       T0MCR   EQU              0xE0004014  ; Determines if an 
+                                                            interrupt is genera
+                                                            ted and if the Time
+                                                             Count (TC)
+   71 00000000 E0004000 
+                       T0IR    EQU              0xE0004000  ;  
+   72 00000000 E000401C 
+                       T0MR1   EQU              0xE000401C
+   73 00000000 E0008000 
+                       T1IR    EQU              0xE0008000
+   74 00000000 E000C000 
+                       U0TRR   EQU              0xE000C000
+   75 00000000 E0008004 
+                       T1TCR   EQU              0xE0008004
+
+
+
+ARM Macro Assembler    Page 3 
+
+
+   76 00000000 E0028018 
+                       IO1DIR  EQU              0xE0028018
+   77 00000000 E000C004 
+                       UART0   EQU              0xE000C004
+   78 00000000 E0008014 
+                       T1MCR   EQU              0xE0008014
+   79 00000000 E000801C 
+                       T1MR1   EQU              0xE000801C
+   80 00000000 40005040 
+                       strobing_flag
+                               EQU              0x40005040
+   81 00000000         
+   82 00000000 40000100 
+                       previous_led_display
+                               EQU              0x40000100
+   83 00000000 40007100 
+                       promptoffset
+                               EQU              0x40007100
+   84 00000000 40007290 
+                       left_right_dir_flag
+                               EQU              0x40007290
+   85 00000000 40007410 
+                       proj_exist_on_board_flag
+                               EQU              0x40007410
+   86 00000000 40006000 
+                       ship_location
+                               EQU              0x40006000
+   87 00000000 40000200 
+                       current_level
+                               EQU              0x40000200
+   88 00000000 40005010 
+                       paused_game_flag
+                               EQU              0x40005010
+   89 00000000         
+   90 00000000 40007990 
+                       keystork_rng_counter
+                               EQU              0x40007990
+   91 00000000 40007994 
+                       current_keyboard_rng_input
+                               EQU              0x40007994
+   92 00000000         
+   93 00000000 40006900 
+                       current_score_1
+                               EQU              0x40006900
+   94 00000000 40006904 
+                       current_score_10
+                               EQU              0x40006904
+   95 00000000 40006908 
+                       current_score_100
+                               EQU              0x40006908
+   96 00000000 4000690C 
+                       current_score_1000
+                               EQU              0x4000690C
+   97 00000000         
+   98 00000000 40006920 
+                       total_score_1
+                               EQU              0x40006920
+   99 00000000 40006924 
+                       total_score_10
+
+
+
+ARM Macro Assembler    Page 4 
+
+
+                               EQU              0x40006924
+  100 00000000 40006928 
+                       total_score_100
+                               EQU              0x40006928
+  101 00000000 4000692C 
+                       total_score_1000
+                               EQU              0x4000692C
+  102 00000000         
+  103 00000000 40006930 
+                       mothership_score_1
+                               EQU              0x40006930
+  104 00000000 40006934 
+                       mothership_score_10
+                               EQU              0x40006934
+  105 00000000 40006938 
+                       mothership_score_100
+                               EQU              0x40006938
+  106 00000000         
+  107 00000000 40006944 
+                       time_left_1
+                               EQU              0x40006944
+  108 00000000 40006948 
+                       time_left_10
+                               EQU              0x40006948
+  109 00000000 4000694C 
+                       time_left_100
+                               EQU              0x4000694C
+  110 00000000 40006954 
+                       time_left_total
+                               EQU              0x40006954
+  111 00000000         
+  112 00000000 40006940 
+                       endpoint_location
+                               EQU              0x40006940
+  113 00000000 400078A0 
+                       mothership_exist_on_board
+                               EQU              0x400078A0
+  114 00000000 40007860 
+                       mothership_left_or_right_dir
+                               EQU              0x40007860
+  115 00000000 40007B00 
+                       timer_counter
+                               EQU              0x40007B00
+  116 00000000 40007A00 
+                       promptend_offset
+                               EQU              0x40007A00
+  117 00000000         
+  118 00000000 40007D00 
+                       LED_1_command
+                               EQU              0x40007D00
+  119 00000000 40007AA0 
+                       seconds_increment_counter
+                               EQU              0x40007AA0
+  120 00000000         
+  121 00000000 40007E20 
+                       prompt_storage_offset
+                               EQU              0x40007E20
+  122 00000000 40007E24 
+                       prompt_storage_offset_copy
+
+
+
+ARM Macro Assembler    Page 5 
+
+
+                               EQU              0x40007E24
+  123 00000000         
+  124 00000000 40007E28 
+                       mothership_appears_count
+                               EQU              0x40007E28
+  125 00000000 40007E2C 
+                       mothership_appears_hit
+                               EQU              0x40007E2C
+  126 00000000         
+  127 00000000 0C 7C 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 4F 
+              4F 4F 4F 
+              4F 4F 4F 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              4D 4D 4D 
+              4D 4D 4D 
+              4D 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 4D 4D 
+              4D 4D 4D 
+              4D 4D 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 57 
+              57 57 57 
+              57 57 57 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+
+
+
+ARM Macro Assembler    Page 6 
+
+
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              57 57 57 
+              57 57 57 
+              57 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 53 53 
+              53 20 20 
+              20 53 53 
+              53 20 20 
+              20 53 53 
+              53 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 53 
+              20 53 20 
+              20 20 53 
+              20 53 20 
+              20 20 53 
+              20 53 20 
+              20 20 7C 
+              0A 0D 7C 
+
+
+
+ARM Macro Assembler    Page 7 
+
+
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              41 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              7C 00    prompt  =                12,"|---------------------|", 1
+0,13 ,  "|                     |", 10,13 , "|       OOOOOOO       |", 10,13 ,  
+"|       MMMMMMM       |", 10,13 ,  "|       MMMMMMM       |", 10,13 ,  "|     
+  WWWWWWW       |", 10,13 ,  "|       WWWWWWW       |", 10,13 ,  "|            
+         |", 10,13 ,  "|                     |", 10,13 ,  "|                   
+  |", 10,13 ,  "|                     |", 10,13 ,  "|   SSS   SSS   SSS   |", 1
+0,13 ,  "|   S S   S S   S S   |", 10,13 ,  "|                     |", 10,13 , 
+ "|                     |", 10,13 ,  "|          A          |", 10, 13 ,"|-----
+----------------|" ,0
+  128 000001A9 0C 7C 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+
+
+
+ARM Macro Assembler    Page 8 
+
+
+              20 20 20 
+              20 20 4F 
+              4F 4F 4F 
+              4F 4F 4F 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              4D 4D 4D 
+              4D 4D 4D 
+              4D 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 4D 4D 
+              4D 4D 4D 
+              4D 4D 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 57 
+              57 57 57 
+              57 57 57 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              57 57 57 
+              57 57 57 
+              57 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+
+
+
+ARM Macro Assembler    Page 9 
+
+
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 53 53 
+              53 20 20 
+              20 53 53 
+              53 20 20 
+              20 53 53 
+              53 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 53 
+              20 53 20 
+              20 20 53 
+              20 53 20 
+              20 20 53 
+              20 53 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              41 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              2D 2D 2D 
+              2D 2D 2D 
+
+
+
+ARM Macro Assembler    Page 10 
+
+
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              7C 00    promptcopy
+                               =                12,"|---------------------|", 1
+0,13 ,  "|                     |", 10,13 , "|       OOOOOOO       |", 10,13 ,  
+"|       MMMMMMM       |", 10,13 ,  "|       MMMMMMM       |", 10,13 ,  "|     
+  WWWWWWW       |", 10,13 ,  "|       WWWWWWW       |", 10,13 ,  "|            
+         |", 10,13 ,  "|                     |", 10,13 ,  "|                   
+  |", 10,13 ,  "|                     |", 10,13 ,  "|   SSS   SSS   SSS   |", 1
+0,13 ,  "|   S S   S S   S S   |", 10,13 ,  "|                     |", 10,13 , 
+ "|                     |", 10,13 ,  "|          A          |", 10, 13 ,"|-----
+----------------|" ,0
+  129 00000352 50 41 55 
+              53 45 44 
+              2C 20 48 
+              49 54 20 
+              54 48 45 
+              20 27 45 
+              6E 74 65 
+              72 27 20 
+              4B 45 59 
+              20 54 4F 
+              20 43 4F 
+              4E 54 49 
+              4E 55 45 
+              00       prompt1 =                "PAUSED, HIT THE 'Enter' KEY TO
+ CONTINUE" ,0 
+                                                            ;ADDED THIS
+  130 0000037A 0C 57 65 
+              6C 63 6F 
+              6D 65 20 
+              74 6F 20 
+              53 70 61 
+              63 65 20 
+              49 6E 76 
+              61 64 65 
+              72 73 2E 
+              20 55 73 
+              65 20 27 
+              41 27 20 
+              61 6E 64 
+              20 27 44 
+              27 20 74 
+              6F 20 6D 
+              6F 76 65 
+              20 6C 65 
+              66 74 20 
+              61 6E 64 
+              20 72 69 
+              67 68 74 
+              2C 20 72 
+              65 73 70 
+              65 63 74 
+              69 76 65 
+              6C 79 2E 
+              20 55 73 
+
+
+
+ARM Macro Assembler    Page 11 
+
+
+              65 20 27 
+              53 70 61 
+              63 65 62 
+              61 72 27 
+              20 74 6F 
+              20 73 68 
+              6F 6F 74 
+              2E 20 50 
+              72 65 73 
+              73 20 27 
+              45 6E 74 
+              65 72 27 
+              20 74 6F 
+              20 73 74 
+              61 72 74 
+              2E 00    prompt0 =                12,"Welcome to Space Invaders. 
+Use 'A' and 'D' to move left and right, respectively. Use 'Spacebar' to shoot. 
+Press 'Enter' to start.",0
+  131 000003FD 0C 7C 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 7C 
+              0A 0D 7C 
+              20 20 20 
+              57 65 6C 
+              63 6F 6D 
+              65 20 74 
+              6F 20 53 
+              70 61 63 
+              65 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 49 6E 
+              76 61 64 
+              65 72 73 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              41 3D 6C 
+              65 66 74 
+              20 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 44 3D 
+              72 69 67 
+              68 74 20 
+              20 20 20 
+              20 20 20 
+
+
+
+ARM Macro Assembler    Page 12 
+
+
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              53 70 61 
+              63 65 3D 
+              53 68 6F 
+              6F 74 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 48 69 
+              74 20 50 
+              30 2E 31 
+              34 20 74 
+              6F 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 53 
+              74 61 72 
+              74 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 53 53 
+              53 20 20 
+              20 53 53 
+              53 20 20 
+              20 53 53 
+              53 20 20 
+              20 7C 0A 
+
+
+
+ARM Macro Assembler    Page 13 
+
+
+              0D 7C 20 
+              20 20 53 
+              20 53 20 
+              20 20 53 
+              20 53 20 
+              20 20 53 
+              20 53 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              41 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              7C 00    promptdir
+                               =                12,"|---------------------|", 1
+0,13 ,  "|   Welcome to Space  |", 10,13 , "|      Invaders       |", 10,13 ,  
+"|       A=left        |", 10,13 ,  "|       D=right       |", 10,13 ,  "|     
+Space=Shoot     |", 10,13 ,  "|     Hit P0.14 to    |", 10,13 ,  "|        Star
+t        |", 10,13 ,  "|                     |", 10,13 ,  "|                   
+  |", 10,13 ,  "|                     |", 10,13 ,  "|   SSS   SSS   SSS   |", 1
+0,13 ,  "|   S S   S S   S S   |", 10,13 ,  "|                     |", 10,13 , 
+ "|                     |", 10,13 ,  "|          A          |", 10, 13 ,"|-----
+----------------|" ,0
+  132 000005A6 0A 0D 4C 
+              65 76 65 
+              6C 3A 20 
+              00       prompt_level
+                               =                10,13, "Level: ",0
+  133 000005B0 0A 0D 4C 
+              61 74 65 
+              73 74 20 
+
+
+
+ARM Macro Assembler    Page 14 
+
+
+              4D 6F 74 
+              68 65 72 
+              73 68 69 
+              70 20 62 
+              6F 75 6E 
+              65 73 20 
+              73 63 6F 
+              72 65 20 
+              3A 20 00 prompt_mothership
+                               =                10,13,"Latest Mothership bounes
+ score : ",0
+  134 000005D4 0A 0D 54 
+              69 6D 65 
+              20 45 6C 
+              61 70 73 
+              65 20 3A 
+              00       prompt_timeleft
+                               =                10,13, "Time Elapse :" ,0
+  135 000005E4 0C 7C 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 47 41 
+              4D 45 20 
+              4F 56 45 
+              52 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+
+
+
+ARM Macro Assembler    Page 15 
+
+
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              53 43 4F 
+              52 45 42 
+              4F 41 52 
+              44 20 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 20 53 
+              43 4F 52 
+              45 3A 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 42 
+              45 54 54 
+              45 52 20 
+              4C 55 43 
+              4B 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 4E 45 
+              58 54 20 
+              54 49 4D 
+              45 21 20 
+              20 20 20 
+              20 7C 0A 
+              0D 7C 20 
+              20 54 69 
+              6D 65 20 
+              75 73 65 
+              64 3A 20 
+              20 20 20 
+              20 73 65 
+              63 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 7C 0A 
+
+
+
+ARM Macro Assembler    Page 16 
+
+
+              0D 7C 20 
+              20 20 48 
+              69 74 20 
+              27 45 4E 
+              54 45 52 
+              27 20 74 
+              6F 20 20 
+              20 20 7C 
+              0A 0D 7C 
+              20 20 20 
+              20 20 73 
+              74 61 72 
+              74 20 61 
+              67 61 69 
+              6E 20 20 
+              20 20 20 
+              7C 0A 0D 
+              7C 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 7C 0A 
+              0D 4C 65 
+              76 65 6C 
+              20 42 72 
+              65 61 6B 
+              64 6F 77 
+              6E 00    promptend
+                               =                12,"|---------------------|", 1
+0,13 ,  "|                     |", 10,13 , "|      GAME OVER      |", 10,13 , "
+|                     |", 10,13 ,"|                     |", 10,13 , "|     SCOR
+EBOARD      |", 10,13 ,  "|   SCORE:            |", 10,13 ,  "|     BETTER LUCK
+     |", 10,13 ,  "|      NEXT TIME!     |", 10,13 ,  "|  Time used:     sec |"
+, 10,13 ,"|                     |", 10,13,"|                     |",10,13, "|  
+ Hit 'ENTER' to    |", 10,13 ,  "|     start again     |", 10,13 ,  "|---------
+------------|" ,10, 13, "Level Breakdown",0
+  136 0000076C 0A 0D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 2D 
+              2D 2D 0A 
+              0D 4C 65 
+              76 65 6C 
+              20 3A 00 promptend_level
+                               =                10,13,"---------------", 10, 13
+, "Level :" , 0
+  137 00000787 0A 0D 53 
+              63 6F 72 
+              65 3A 00 promptend_levelscore
+                               =                10, 13, "Score:" , 0
+  138 00000790 0A 0D 44 
+              65 61 74 
+              68 20 43 
+              6F 75 6E 
+              74 3A 00 promptend_leveldeathcount
+
+
+
+ARM Macro Assembler    Page 17 
+
+
+                               =                10, 13, "Death Count:" , 0
+  139 0000079F 0A 0D 4D 
+              6F 74 68 
+              65 72 73 
+              68 69 70 
+              3A 00    promptend_levelmothership
+                               =                10, 13, "Mothership:" , 0
+  140 000007AD 0A 0D 54 
+              6F 74 61 
+              6C 20 74 
+              69 6D 65 
+              20 45 6C 
+              61 70 73 
+              65 3A 00 promptend_leveltime
+                               =                10, 13, "Total time Elapse:" , 
+0
+  141 000007C2 20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 00 prompt_storage
+                               =                "                              
+                    " , 0
+  142 000007F5         
+  143 000007F5 00 00 00        ALIGN
+  144 000007F8         
+  145 000007F8         lab7
+  146 000007F8 E92D4000        STMFD            sp!, {lr}
+  147 000007FC EBFFFFFE        BL               uart_init
+  148 00000800         
+  149 00000800 E59F0CBC        LDR              r0, =time_left_total
+  150 00000804 E3A01000        MOV              r1, #0
+  151 00000808 E5801000        STR              r1, [r0]
+  152 0000080C         
+  153 0000080C E59F0CB4        LDR              r0, =prompt_storage
+  154 00000810 E59F1CB4        LDR              r1, =prompt_storage_offset
+  155 00000814 E5810000        STR              r0, [r1]
+  156 00000818 E59F2CB0        LDR              r2, =prompt_storage_offset_copy
+  157 0000081C E5820000        STR              r0, [r2]
+  158 00000820         
+  159 00000820 E59F0CAC        LDR              r0, =time_left_1
+  160 00000824 E3A01030        MOV              r1, #0x30
+  161 00000828 E5801000        STR              r1, [r0]
+  162 0000082C         
+  163 0000082C E59F0CA4        LDR              r0, =time_left_10
+  164 00000830 E5801000        STR              r1, [r0]
+  165 00000834 E59F0CA0        LDR              r0, =time_left_100
+
+
+
+ARM Macro Assembler    Page 18 
+
+
+  166 00000838 E5801000        STR              r1, [r0]
+  167 0000083C         
+  168 0000083C         
+  169 0000083C E59F0C9C        LDR              r0, =LED_1_command
+  170 00000840 E3A01DDE        LDR              r1, =0x3780 ;0
+  171 00000844 E4801004        STR              r1, [r0],#4
+  172 00000848         
+  173 00000848 E3A01C03        LDR              r1, =0x300  ;1
+  174 0000084C E4801004        STR              r1, [r0],#4
+  175 00000850         
+  176 00000850 E59F1C8C        LDR              r1, =0x9580 ;2
+  177 00000854 E4801004        STR              r1, [r0],#4
+  178 00000858         
+  179 00000858 E59F1C88        LDR              r1, =0x8780 ;3
+  180 0000085C E4801004        STR              r1, [r0],#4
+  181 00000860         
+  182 00000860 E3A01CA3        LDR              r1, =0xA300 ;4
+  183 00000864 E4801004        STR              r1, [r0],#4
+  184 00000868         
+  185 00000868 E59F1C7C        LDR              r1, =0xA680 ;5
+  186 0000086C E4801004        STR              r1, [r0],#4
+  187 00000870         
+  188 00000870 E59F1C78        LDR              r1, =0xB680 ;6
+  189 00000874 E4801004        STR              r1, [r0],#4
+  190 00000878         
+  191 00000878 E3A01D0E        LDR              r1, =0x380  ;7
+  192 0000087C E4801004        STR              r1, [r0],#4
+  193 00000880         
+  194 00000880 E59F1C6C        LDR              r1, =0xB780 ;8
+  195 00000884 E4801004        STR              r1, [r0],#4
+  196 00000888         
+  197 00000888 E59F1C68        LDR              r1, =0xA780 ;9
+  198 0000088C E5801000        STR              r1, [r0]
+  199 00000890         
+  200 00000890         
+  201 00000890         
+  202 00000890         
+  203 00000890         
+  204 00000890         
+  205 00000890 E59F0C64        LDR              r0, =strobing_flag
+  206 00000894 E3A01001        MOV              r1, #1
+  207 00000898 E5801000        STR              r1, [r0]
+  208 0000089C         
+  209 0000089C E59F0C5C        LDR              r0, =timer_counter
+  210 000008A0 E3A01000        MOV              r1, #0
+  211 000008A4 E5801000        STR              r1, [r0]
+  212 000008A8         
+  213 000008A8 E59F0C54        LDR              r0, =total_score_1
+  214 000008AC E5801000        STR              r1, [r0]
+  215 000008B0 E59F0C50        LDR              r0, =total_score_10
+  216 000008B4 E5801000        STR              r1, [r0]
+  217 000008B8 E59F0C4C        LDR              r0, =total_score_100
+  218 000008BC E5801000        STR              r1, [r0]
+  219 000008C0 E59F0C48        LDR              r0, =total_score_1000
+  220 000008C4 E5801000        STR              r1, [r0]
+  221 000008C8         
+  222 000008C8 E59F0C44        LDR              r0, =mothership_score_1
+  223 000008CC E5801000        STR              r1, [r0]
+  224 000008D0 E59F0C40        LDR              r0, =mothership_score_10
+
+
+
+ARM Macro Assembler    Page 19 
+
+
+  225 000008D4 E5801000        STR              r1, [r0]
+  226 000008D8 E59F0C3C        LDR              r0, =mothership_score_100
+  227 000008DC E5801000        STR              r1, [r0]
+  228 000008E0         
+  229 000008E0 E59F0C38        LDR              r0, =seconds_increment_counter
+  230 000008E4 E5801000        STR              r1, [r0]
+  231 000008E8         
+  232 000008E8 E59F0C34        LDR              r0, =IO0DIR
+  233 000008EC E59F1C34        LDR              r1, =0x26B7FF ;Makeing 7 segmen
+                                                            t pins as OUTPUT
+  234 000008F0 E5801000        STR              r1, [r0]    ;dont know if it wo
+                                                            rks..
+  235 000008F4         
+  236 000008F4         
+  237 000008F4 E59F0C30        LDR              r0, =IO1DIR
+  238 000008F8 E3A0180F        LDR              r1, = 0x00F0000 ; Making P1.16 
+                                                            ~ P1.19  (aka butto
+                                                            n LED as Output)
+  239 000008FC E5801000        STR              r1, [r0]    ;
+  240 00000900         
+  241 00000900 E59F0C28        LDR              r0, =lives
+  242 00000904 E3A01004        MOV              r1, #4      ; Making P1.16 ~ P1
+                                                            .19  (aka button LE
+                                                            D as Output)
+  243 00000908 E5801000        STR              r1, [r0]    ;
+  244 0000090C         
+  245 0000090C         
+  246 0000090C E59F0C20        LDR              r0, =current_level
+  247 00000910 E3A01030        MOV              r1, #0x30
+  248 00000914 E5801000        STR              r1, [r0]
+  249 00000918         
+  250 00000918 E59F0C18        LDR              r0, =keystork_rng_counter
+  251 0000091C E5801000        STR              r1, [r0]
+  252 00000920 E59F0C14        LDR              r0, =current_keyboard_rng_input
+  253 00000924 E5801000        STR              r1, [r0]
+  254 00000928         
+  255 00000928         
+  256 00000928 E59F0C10        LDR              r0, =prompt
+  257 0000092C E59F1C10        LDR              r1, =promptoffset
+  258 00000930 E5810000        STR              r0, [r1]
+  259 00000934         
+  260 00000934 E59F0C08        LDR              r0, =promptoffset
+  261 00000938 E5901000        LDR              r1, [r0]
+  262 0000093C E59F0C04        LDR              r0, =0x106
+  263 00000940 E0811000        ADD              r1 , r1, r0
+  264 00000944 E59F0C00        LDR              r0, =endpoint_location
+  265 00000948 E5801000        STR              r1,  [r0]
+  266 0000094C         
+  267 0000094C E59F0BFC        LDR              r0, =paused_game_flag
+  268 00000950 E3A01001        MOV              r1, #1
+  269 00000954 E5801000        STR              r1, [r0]
+  270 00000958         
+  271 00000958 E59F0BF4        LDR              r0, =promptdir
+  272 0000095C EBFFFFFE        BL               output_string
+  273 00000960         
+  274 00000960         lab7_restart                         ;where to put LTORG
+                                                             so game wont crash
+                                                             during new level
+  275 00000960         
+
+
+
+ARM Macro Assembler    Page 20 
+
+
+  276 00000960         
+  277 00000960 E59F0BF0        LDR              r0, =current_score_1
+  278 00000964 E3A01000        MOV              r1, #0
+  279 00000968 E5801000        STR              r1, [r0]
+  280 0000096C E59F0BE8        LDR              r0, =current_score_10
+  281 00000970 E5801000        STR              r1, [r0]
+  282 00000974 E59F0BE4        LDR              r0, =current_score_100
+  283 00000978 E5801000        STR              r1, [r0]
+  284 0000097C E59F0BE0        LDR              r0, =current_score_1000
+  285 00000980 E5801000        STR              r1, [r0]
+  286 00000984         
+  287 00000984 E59F0BDC        LDR              r0,=mothership_appears_count
+  288 00000988 E5801000        STR              r1,[r0]
+  289 0000098C E59F0BD8        LDR              r0,=mothership_appears_hit
+  290 00000990 E5801000        STR              r1, [r0]
+  291 00000994         
+  292 00000994         
+  293 00000994 E59F0BD4        LDR              r0, =promptcopy
+  294 00000998 E59F2BA4        LDR              r2, =promptoffset
+  295 0000099C E5923000        LDR              r3, [r2]
+  296 000009A0         
+  297 000009A0         copying_again_loop
+  298 000009A0 E4D01001        LDRB             r1, [r0], #1
+  299 000009A4 E4C31001        STRB             r1, [r3], #1
+  300 000009A8 E3510000        CMP              r1, #0x00
+  301 000009AC 0A000000        BEQ              done_copying
+  302 000009B0 EAFFFFFA        B                copying_again_loop
+  303 000009B4         done_copying
+  304 000009B4         ;LDR r0, =prompt
+  305 000009B4         ;BL output_string
+  306 000009B4 EBFFFFFE        BL               ship_setups
+  307 000009B8 EBFFFFFE        BL               enemy_setups
+  308 000009BC EBFFFFFE        BL               proj_setups
+  309 000009C0 EBFFFFFE        BL               enemy_proj_setups
+  310 000009C4 EBFFFFFE        BL               mothership_setup
+  311 000009C8 E59F0BA4        LDR              r0, =0xE002C000
+  312 000009CC E5901000        LDR              r1, [r0]
+  313 000009D0 E3811202        ORR              r1, r1, #0x20000000 
+                                                            ; set pin 29 on
+  314 000009D4 E3C11201        BIC              r1, r1, #0x10000000 ; set pin 2
+                                                            8 off, to 0 
+  315 000009D8 E5801000        STR              r1, [r0]    ; PINSEL0 bits 29:2
+                                                            8 = 10
+  316 000009DC         
+  317 000009DC         ;uart0 interrupt init
+  318 000009DC E59F0B94        LDR              r0, =UART0  ;interrupt enable f
+                                                            ucking register
+  319 000009E0 E5901000        LDR              r1, [r0]
+  320 000009E4 E3811001        ORR              r1, r1, #1
+  321 000009E8 E3C11002        BIC              r1, r1, #2
+  322 000009EC E5801000        STR              r1, [r0]
+  323 000009F0         
+  324 000009F0         ;initiate/enable timer 
+  325 000009F0 E59F0B84        LDR              r0, =T0TCR
+  326 000009F4 E5901000        LDR              r1, [r0]
+  327 000009F8 E3811001        ORR              r1, r1, #0x1
+  328 000009FC E5801000        STR              r1, [r0]
+  329 00000A00         
+  330 00000A00 E59F0B78        LDR              r0, =T0MCR
+
+
+
+ARM Macro Assembler    Page 21 
+
+
+  331 00000A04 E5901000        LDR              r1, [r0]
+  332 00000A08 E3811018        ORR              r1, r1, #0x18
+  333 00000A0C E3C11007        BIC              r1, r1, #0x7
+  334 00000A10 E5801000        STR              r1, [r0]
+  335 00000A14 E59F0B18        LDR              r0, =current_level
+  336 00000A18 E5901000        LDR              r1, [r0]
+  337 00000A1C E3510030        CMP              r1, #0x30
+  338 00000A20         
+  339 00000A20 1A000003        BNE              level_1
+  340 00000A24 E59F0B58        LDR              r0, =T0MR1
+  341 00000A28 E3A01401        LDR              r1, =0x01000000 ;
+  342 00000A2C E5801000        STR              r1, [r0]
+  343 00000A30 EA000014        B                continue_to
+  344 00000A34         level_1
+  345 00000A34 E3510031        CMP              r1, #0x31
+  346 00000A38 1A000003        BNE              level_2
+  347 00000A3C E59F0B40        LDR              r0, =T0MR1
+  348 00000A40 E3A018A5        LDR              r1, =0x00A50000 ;
+  349 00000A44 E5801000        STR              r1, [r0]
+  350 00000A48 EA00000E        B                continue_to
+  351 00000A4C         level_2
+  352 00000A4C E3510032        CMP              r1, #0x32
+  353 00000A50 1A000003        BNE              level_3
+  354 00000A54 E59F0B28        LDR              r0, =T0MR1
+  355 00000A58 E3A01855        LDR              r1, =0x00550000 ;
+  356 00000A5C E5801000        STR              r1, [r0]
+  357 00000A60 EA000008        B                continue_to
+  358 00000A64         level_3
+  359 00000A64 E3510033        CMP              r1, #0x33
+  360 00000A68 1A000003        BNE              level_4
+  361 00000A6C E59F0B10        LDR              r0, =T0MR1
+  362 00000A70 E3A0180F        LDR              r1, =0x000F0000 ;
+  363 00000A74 E5801000        STR              r1, [r0]
+  364 00000A78 EA000002        B                continue_to
+  365 00000A7C         level_4
+  366 00000A7C E59F0B00        LDR              r0, =T0MR1
+  367 00000A80 E3A01801        LDR              r1, =0x00010000 ;
+  368 00000A84 E5801000        STR              r1, [r0]
+  369 00000A88         
+  370 00000A88         continue_to
+  371 00000A88 E59F0AF8        LDR              r0, =T1TCR
+  372 00000A8C E5901000        LDR              r1, [r0]
+  373 00000A90 E3811001        ORR              r1, r1, #0x1
+  374 00000A94 E5801000        STR              r1, [r0]
+  375 00000A98         ;LTORG
+  376 00000A98 E59F0AEC        LDR              r0, =T1MCR
+  377 00000A9C E5901000        LDR              r1, [r0]
+  378 00000AA0 E3811018        ORR              r1, r1, #0x18
+  379 00000AA4 E3C11007        BIC              r1, r1, #0x7
+  380 00000AA8 E5801000        STR              r1, [r0]
+  381 00000AAC         
+  382 00000AAC E59F0ADC        LDR              r0, =T1MR1
+  383 00000AB0 E3A01A03        LDR              r1, =0x00003000 ;0x11940000
+  384 00000AB4 E5801000        STR              r1, [r0]
+  385 00000AB8         
+  386 00000AB8         ; Classify sources as IRQ or FIQ
+  387 00000AB8 E59F0AD4        LDR              r0, =0xFFFFF000
+  388 00000ABC E590100C        LDR              r1, [r0, #0xC]
+  389 00000AC0 E59F2AD0        LDR              r2, =0x8070 ;8 for bit15 extern
+
+
+
+ARM Macro Assembler    Page 22 
+
+
+                                                            al int, 1 for bit4 
+                                                            timer, 
+  390 00000AC4         ;0x8050 for timer 0, 0x8070 timer 0 and 1
+  391 00000AC4 E1811002        ORR              r1, r1, r2  ; External Interrup
+                                                            t 1
+  392 00000AC8 E580100C        STR              r1, [r0, #0xC]
+  393 00000ACC         
+  394 00000ACC         ; Enable Interrupts
+  395 00000ACC E59F0AC0        LDR              r0, =0xFFFFF000
+  396 00000AD0 E5901010        LDR              r1, [r0, #0x10]
+  397 00000AD4 E1811002        ORR              r1, r1, r2  ; External Interrup
+                                                            t 1
+  398 00000AD8 E5801010        STR              r1, [r0, #0x10]
+  399 00000ADC         
+  400 00000ADC         ; External Interrupt 1 setup for edge sensitive
+  401 00000ADC E59F0AB8        LDR              r0, =0xE01FC148
+  402 00000AE0 E5901000        LDR              r1, [r0]
+  403 00000AE4 E3811002        ORR              r1, r1, #2  ; EINT1 = Edge Sens
+                                                            itive
+  404 00000AE8 E5801000        STR              r1, [r0]
+  405 00000AEC         
+  406 00000AEC         ; Enable FIQ's, Disable IRQ's
+  407 00000AEC E10F0000        MRS              r0, CPSR
+  408 00000AF0 E3C00040        BIC              r0, r0, #0x40
+  409 00000AF4 E3800080        ORR              r0, r0, #0x80
+  410 00000AF8 E121F000        MSR              CPSR_c, r0
+  411 00000AFC         
+  412 00000AFC         
+  413 00000AFC         
+  414 00000AFC         
+  415 00000AFC         infinite_loop
+  416 00000AFC E59F0A4C        LDR              r0, =paused_game_flag
+  417 00000B00 E5901000        LDR              r1, [r0]
+  418 00000B04 E3510000        CMP              r1, #0
+  419 00000B08 0A000016        BEQ              not_paused
+  420 00000B0C         
+  421 00000B0C         paused_loop
+  422 00000B0C E59F0A3C        LDR              r0, =paused_game_flag
+  423 00000B10 E5901000        LDR              r1, [r0]
+  424 00000B14 E3510000        CMP              r1, #0
+  425 00000B18 0A000012        BEQ              not_paused
+  426 00000B1C         ;BL newline
+  427 00000B1C         ; stop movement of everything, BASCIALLY STOPS TIMER
+  428 00000B1C E59F0A54        LDR              r0, =UART0  ;interrupt enable f
+                                                            ucking register
+  429 00000B20 E5901000        LDR              r1, [r0]
+  430 00000B24 E3C11003        BIC              r1, r1, #3
+  431 00000B28 E5801000        STR              r1, [r0]
+  432 00000B2C         
+  433 00000B2C E59F0A48        LDR              r0, =T0TCR
+  434 00000B30 E5901000        LDR              r1, [r0]
+  435 00000B34 E2011000        AND              r1, r1, #0x0
+  436 00000B38 E5801000        STR              r1, [r0]
+  437 00000B3C         
+  438 00000B3C E59F0A44        LDR              r0, =T1TCR
+  439 00000B40 E5901000        LDR              r1, [r0]
+  440 00000B44 E2011000        AND              r1, r1, #0x0
+  441 00000B48 E5801000        STR              r1, [r0]
+  442 00000B4C         
+
+
+
+ARM Macro Assembler    Page 23 
+
+
+  443 00000B4C         ;light up blue led for paused
+  444 00000B4C E59F0A4C        LDR              r0, =IO0CLR
+  445 00000B50 E3A01826        LDR              r1, =0x260000 ;
+  446 00000B54 E5801000        STR              r1, [r0]    ;
+  447 00000B58 E59F0A44        LDR              r0, =IO0SET
+  448 00000B5C E3A01822        LDR              r1, =0x220000
+  449 00000B60 E5801000        STR              r1, [r0]
+  450 00000B64         
+  451 00000B64 EAFFFFE8        B                paused_loop
+  452 00000B68         
+  453 00000B68         not_paused
+  454 00000B68 E59F0A08        LDR              r0, =UART0  ;interrupt enable f
+                                                            ucking register
+  455 00000B6C E5901000        LDR              r1, [r0]
+  456 00000B70 E3811001        ORR              r1, r1, #1
+  457 00000B74 E3C11002        BIC              r1, r1, #2
+  458 00000B78 E5801000        STR              r1, [r0]
+  459 00000B7C         
+  460 00000B7C E59F09F8        LDR              r0, =T0TCR
+  461 00000B80 E5901000        LDR              r1, [r0]
+  462 00000B84 E3811001        ORR              r1, r1, #0x1
+  463 00000B88 E5801000        STR              r1, [r0]
+  464 00000B8C         
+  465 00000B8C E59F09F4        LDR              r0, =T1TCR
+  466 00000B90 E5901000        LDR              r1, [r0]
+  467 00000B94 E3811001        ORR              r1, r1, #0x1
+  468 00000B98 E5801000        STR              r1, [r0]
+  469 00000B9C         
+  470 00000B9C         ;light up green led
+  471 00000B9C E59F09FC        LDR              r0, =IO0CLR
+  472 00000BA0 E3A01826        LDR              r1, =0x260000 ;
+  473 00000BA4 E5801000        STR              r1, [r0]
+  474 00000BA8 E59F09F4        LDR              r0, =IO0SET
+  475 00000BAC E3A01806        LDR              r1, =0x60000
+  476 00000BB0 E5801000        STR              r1, [r0]
+  477 00000BB4         
+  478 00000BB4 EAFFFFD0        B                infinite_loop
+  479 00000BB8         
+  480 00000BB8         end_of_code
+  481 00000BB8 E8BD4000        LDMFD            sp!, {lr}
+  482 00000BBC E12FFF1E        BX               lr
+  483 00000BC0         
+  484 00000BC0         update_map
+  485 00000BC0 E92D4002        STMFD            SP!, {r1,lr}
+  486 00000BC4 E59F1978        LDR              r1 , =promptoffset
+  487 00000BC8 E5910000        LDR              r0, [r1]
+  488 00000BCC EBFFFFFE        BL               output_string
+  489 00000BD0         
+  490 00000BD0 E59F09D0        LDR              r0, =prompt_level
+  491 00000BD4 EBFFFFFE        BL               output_string
+  492 00000BD8         
+  493 00000BD8 E59F0954        LDR              r0, =current_level
+  494 00000BDC EBFFFFFE        BL               output_string
+  495 00000BE0         
+  496 00000BE0 E59F09C4        LDR              r0, =prompt_mothership
+  497 00000BE4 EBFFFFFE        BL               output_string
+  498 00000BE8         
+  499 00000BE8 E59F092C        LDR              r0, =mothership_score_100
+  500 00000BEC EBFFFFFE        BL               output_string
+
+
+
+ARM Macro Assembler    Page 24 
+
+
+  501 00000BF0 E59F0920        LDR              r0, =mothership_score_10
+  502 00000BF4 EBFFFFFE        BL               output_string
+  503 00000BF8 E59F0914        LDR              r0, =mothership_score_1
+  504 00000BFC EBFFFFFE        BL               output_string
+  505 00000C00         
+  506 00000C00 E59F09A8        LDR              r0, =prompt_timeleft
+  507 00000C04 EBFFFFFE        BL               output_string
+  508 00000C08 E59F08CC        LDR              r0, =time_left_100
+  509 00000C0C EBFFFFFE        BL               output_string
+  510 00000C10 E59F08C0        LDR              r0, =time_left_10
+  511 00000C14 EBFFFFFE        BL               output_string
+  512 00000C18 E59F08B4        LDR              r0, =time_left_1
+  513 00000C1C EBFFFFFE        BL               output_string
+  514 00000C20         
+  515 00000C20 E8BD4002        LDMFD            SP!, {r1,lr}
+  516 00000C24 E12FFF1E        BX               lr
+  517 00000C28         
+  518 00000C28         FIQ_Handler
+  519 00000C28 E92D5FFF        STMFD            SP!, {r0-r12, lr} 
+                                                            ; Save registers 
+  520 00000C2C         TIMER0                               ;cehcking for timer
+                                                             interrupt
+  521 00000C2C E59F2980        LDR              r2, =T0IR
+  522 00000C30 E5923000        LDR              r3, [r2]
+  523 00000C34 E3130002        TST              r3, #2
+  524 00000C38 0A00000D        BEQ              TIMER1
+  525 00000C3C         ;start_timer_handle
+  526 00000C3C E92D5FFF        STMFD            SP!, {r0-r12, lr} 
+                                                            ; Save registers
+  527 00000C40         
+  528 00000C40 E59F0904        LDR              r0, =endpoint_location
+  529 00000C44 E5901000        LDR              r1, [r0]
+  530 00000C48 E5D12000        LDRB             r2, [r1]
+  531 00000C4C E352004F        CMP              r2, #0x4F
+  532 00000C50 0AFFFFFE        BEQ              endgame
+  533 00000C54 E352004D        CMP              r2, #0x4D
+  534 00000C58 0AFFFFFE        BEQ              endgame
+  535 00000C5C E3520057        CMP              r2, #0x57
+  536 00000C60 0AFFFFFE        BEQ              endgame
+  537 00000C64 EBFFFFFE        BL               enemy_motion
+  538 00000C68 E8BD5FFF        LDMFD            SP!, {r0-r12, lr} ; Restore reg
+                                                            isters 
+  539 00000C6C E3833002        ORR              r3, r3, #2
+  540 00000C70 E5823000        STR              r3, [r2]
+  541 00000C74         
+  542 00000C74         TIMER1
+  543 00000C74 E59F293C        LDR              r2, =T1IR
+  544 00000C78 E5923000        LDR              r3, [r2]
+  545 00000C7C E3130002        TST              r3, #2
+  546 00000C80 0A0000C7        BEQ              UART0_int
+  547 00000C84         
+  548 00000C84 E92D5FFF        STMFD            SP!, {r0-r12, lr}
+  549 00000C88         
+  550 00000C88 E59F0890        LDR              r0, =seconds_increment_counter
+  551 00000C8C E5901000        LDR              r1, [r0]
+  552 00000C90 E2811001        ADD              r1, r1 , #1
+  553 00000C94 E5801000        STR              r1, [r0]
+  554 00000C98 E3A02C06        LDR              r2, =0x600
+  555 00000C9C E1510002        CMP              r1, r2
+
+
+
+ARM Macro Assembler    Page 25 
+
+
+  556 00000CA0 1A00001A        BNE              skip_adding_second
+  557 00000CA4         
+  558 00000CA4 E59F0874        LDR              r0, =seconds_increment_counter
+  559 00000CA8 E3A01000        MOV              r1, #0
+  560 00000CAC E5801000        STR              r1, [r0]
+  561 00000CB0         
+  562 00000CB0         
+  563 00000CB0         
+  564 00000CB0 E59F080C        LDR              r0, =time_left_total
+  565 00000CB4 E5901000        LDR              r1, [r0]
+  566 00000CB8 E3510078        CMP              r1, #120
+  567 00000CBC 0AFFFFFE        BEQ              endgame
+  568 00000CC0 E2811001        ADD              r1, r1, #1
+  569 00000CC4 E5801000        STR              r1, [r0]
+  570 00000CC8         
+  571 00000CC8 E59F0804        LDR              r0, =time_left_1
+  572 00000CCC E5901000        LDR              r1, [r0]
+  573 00000CD0 E2811001        ADD              r1, r1, #1
+  574 00000CD4         
+  575 00000CD4 E351003A        CMP              r1, #0x3A
+  576 00000CD8 1A00000B        BNE              its_regular
+  577 00000CDC E241100A        SUB              r1, r1, #10
+  578 00000CE0 E59F37F0        LDR              r3, =time_left_10
+  579 00000CE4 E5934000        LDR              r4, [r3]
+  580 00000CE8 E2844001        ADD              r4, r4, #1
+  581 00000CEC E354003A        CMP              r4, #0x3A
+  582 00000CF0 1A000004        BNE              its_reegular
+  583 00000CF4 E244400A        SUB              r4, r4, #10
+  584 00000CF8 E59F57DC        LDR              r5, =time_left_100
+  585 00000CFC E5956000        LDR              r6, [r5]
+  586 00000D00 E2866001        ADD              r6, r6 ,#1
+  587 00000D04 E5856000        STR              r6 , [r5]
+  588 00000D08         its_reegular
+  589 00000D08 E5834000        STR              r4, [r3]
+  590 00000D0C         
+  591 00000D0C         its_regular
+  592 00000D0C E5801000        STR              r1, [r0]
+  593 00000D10         
+  594 00000D10         skip_adding_second
+  595 00000D10         ;############################################### 
+  596 00000D10         ;strobing
+  597 00000D10         
+  598 00000D10 E59F07E4        LDR              r0, =strobing_flag
+  599 00000D14 E5D01000        LDRB             r1, [r0]
+  600 00000D18         
+  601 00000D18 E3510001        CMP              r1, #1
+  602 00000D1C 1A000011        BNE              strobing_100
+  603 00000D20         
+  604 00000D20 E3A01002        MOV              r1, #2
+  605 00000D24 E5C01000        STRB             r1, [r0]
+  606 00000D28 E59F07F4        LDR              r0, =IO0DIR
+  607 00000D2C E59F1888        LDR              r1, =0x26B784 ;1000
+  608 00000D30 E5801000        STR              r1, [r0]
+  609 00000D34 E59F6864        LDR              r6, =IO0CLR
+  610 00000D38 E59F77B4        LDR              r7, =0xB780
+  611 00000D3C E5867000        STR              r7, [r6]
+  612 00000D40         
+  613 00000D40 E59F081C        LDR              r0, =current_score_1000
+  614 00000D44 E5D01000        LDRB             r1, [r0]
+
+
+
+ARM Macro Assembler    Page 26 
+
+
+  615 00000D48 E3A02004        MOV              r2, #4
+  616 00000D4C E0030192        MUL              r3, r2 , r1
+  617 00000D50 E59F0788        LDR              r0, =LED_1_command
+  618 00000D54 E0800003        ADD              r0, r0, r3
+  619 00000D58 E5904000        LDR              r4, [r0]
+  620 00000D5C         
+  621 00000D5C         
+  622 00000D5C         
+  623 00000D5C E59F6840        LDR              r6, =IO0SET
+  624 00000D60 E5864000        STR              r4, [r6]
+  625 00000D64 EA00003E        B                done_strobbing
+  626 00000D68         ;############################################### 
+  627 00000D68         strobing_100
+  628 00000D68 E3510002        CMP              r1, #2
+  629 00000D6C 1A000015        BNE              strobing_10
+  630 00000D70         
+  631 00000D70 E3A01003        MOV              r1, #3
+  632 00000D74 E5C01000        STRB             r1, [r0]
+  633 00000D78         
+  634 00000D78 E59F07A4        LDR              r0, =IO0DIR
+  635 00000D7C E59F183C        LDR              r1, =0x26B788 ;100
+  636 00000D80 E5801000        STR              r1, [r0]
+  637 00000D84 E59F6814        LDR              r6, =IO0CLR
+  638 00000D88 E59F7764        LDR              r7, =0xB780
+  639 00000D8C E5867000        STR              r7, [r6]
+  640 00000D90         
+  641 00000D90 E59F07C8        LDR              r0, =current_score_100
+  642 00000D94 E5901000        LDR              r1, [r0]
+  643 00000D98 E3510000        CMP              r1, #0
+  644 00000D9C BA000002        BLT              negative_case
+  645 00000DA0 E3A02004        MOV              r2, #4
+  646 00000DA4 E0030192        MUL              r3, r2 , r1
+  647 00000DA8 EA000000        B                regular_case
+  648 00000DAC         negative_case
+  649 00000DAC E3A03000        MOV              r3, #0
+  650 00000DB0         regular_case
+  651 00000DB0 E59F0728        LDR              r0, =LED_1_command
+  652 00000DB4 E0800003        ADD              r0, r0, r3
+  653 00000DB8 E5904000        LDR              r4, [r0]
+  654 00000DBC         
+  655 00000DBC         
+  656 00000DBC         
+  657 00000DBC E59F67E0        LDR              r6, =IO0SET
+  658 00000DC0 E5864000        STR              r4, [r6]
+  659 00000DC4 EA000026        B                done_strobbing
+  660 00000DC8         ;###############################################
+  661 00000DC8         strobing_10
+  662 00000DC8 E3510003        CMP              r1, #3
+  663 00000DCC 1A000011        BNE              strobing_1
+  664 00000DD0         
+  665 00000DD0 E3A01004        MOV              r1, #4
+  666 00000DD4 E5C01000        STRB             r1, [r0]
+  667 00000DD8         
+  668 00000DD8 E59F0744        LDR              r0, =IO0DIR
+  669 00000DDC E59F17E0        LDR              r1, =0x26B790 ;10
+  670 00000DE0 E5801000        STR              r1, [r0]
+  671 00000DE4 E59F67B4        LDR              r6, =IO0CLR
+  672 00000DE8 E59F7704        LDR              r7, =0xB780
+  673 00000DEC E5867000        STR              r7, [r6]
+
+
+
+ARM Macro Assembler    Page 27 
+
+
+  674 00000DF0         
+  675 00000DF0 E59F0764        LDR              r0, =current_score_10
+  676 00000DF4 E5D01000        LDRB             r1, [r0]
+  677 00000DF8 E3A02004        MOV              r2, #4
+  678 00000DFC E0030192        MUL              r3, r2 , r1
+  679 00000E00 E59F06D8        LDR              r0, =LED_1_command
+  680 00000E04 E0800003        ADD              r0, r0, r3
+  681 00000E08 E5904000        LDR              r4, [r0]
+  682 00000E0C         
+  683 00000E0C         
+  684 00000E0C         
+  685 00000E0C E59F6790        LDR              r6, =IO0SET
+  686 00000E10 E5864000        STR              r4, [r6]
+  687 00000E14 EA000012        B                done_strobbing
+  688 00000E18         ;############################################### 
+  689 00000E18         strobing_1
+  690 00000E18 E3510004        CMP              r1, #4
+  691 00000E1C 1A000010        BNE              strobing_0
+  692 00000E20         
+  693 00000E20 E3A01001        MOV              r1, #1
+  694 00000E24 E5C01000        STRB             r1, [r0]
+  695 00000E28         
+  696 00000E28 E59F06F4        LDR              r0, =IO0DIR
+  697 00000E2C E59F1794        LDR              r1, =0x26B7A0 ;1
+  698 00000E30 E5801000        STR              r1, [r0]
+  699 00000E34 E59F6764        LDR              r6, =IO0CLR
+  700 00000E38 E59F76B4        LDR              r7, =0xB780
+  701 00000E3C E5867000        STR              r7, [r6]
+  702 00000E40         
+  703 00000E40 E59F0710        LDR              r0, =current_score_1
+  704 00000E44 E5D01000        LDRB             r1, [r0]
+  705 00000E48 E3A02004        MOV              r2, #4
+  706 00000E4C E0030192        MUL              r3, r2 , r1
+  707 00000E50 E59F0688        LDR              r0, =LED_1_command
+  708 00000E54 E0800003        ADD              r0, r0, r3
+  709 00000E58 E5904000        LDR              r4, [r0]
+  710 00000E5C         
+  711 00000E5C         
+  712 00000E5C         
+  713 00000E5C E59F6740        LDR              r6, =IO0SET
+  714 00000E60 E5864000        STR              r4, [r6]
+  715 00000E64         strobing_0
+  716 00000E64         done_strobbing
+  717 00000E64         
+  718 00000E64 E59F0694        LDR              r0, =timer_counter
+  719 00000E68 E5901000        LDR              r1, [r0]
+  720 00000E6C E2811001        ADD              r1, r1, #1
+  721 00000E70 E5801000        STR              r1, [r0]
+  722 00000E74 E3A02095        LDR              r2, =0x95
+  723 00000E78         ;############################################### 
+  724 00000E78 E1510002        CMP              r1 , r2
+  725 00000E7C 1A000045        BNE              skip_cuz_soft_timer
+  726 00000E80         
+  727 00000E80 E59F0678        LDR              r0, =timer_counter
+  728 00000E84 E3A01000        MOV              r1, #0
+  729 00000E88 E5C01000        STRB             r1, [r0]
+  730 00000E8C         
+  731 00000E8C E59F0738        LDR              r0, =proj_exist_on_board_flag ;
+                                                                   EQU 0x400074
+
+
+
+ARM Macro Assembler    Page 28 
+
+
+                                                            10
+  732 00000E90 E5D01000        LDRB             r1, [r0]
+  733 00000E94 E3510001        CMP              r1, #1
+  734 00000E98 0A000000        BEQ              exist_on_board
+  735 00000E9C         ;BL eject_proj;This line is for test purpose, will be de
+                       lete once i compare the proj_exist_flage
+  736 00000E9C EA000006        B                done_with_existflag
+  737 00000EA0         exist_on_board
+  738 00000EA0         
+  739 00000EA0 E59F06F8        LDR              r0, =IO0CLR
+  740 00000EA4 E3A01826        LDR              r1, =0x260000 ;
+  741 00000EA8 E5801000        STR              r1, [r0]    ;
+  742 00000EAC E59F06F0        LDR              r0, =IO0SET
+  743 00000EB0 E3A01709        LDR              r1, =0x240000
+  744 00000EB4 E5801000        STR              r1, [r0]
+  745 00000EB8 EBFFFFFE        BL               proj_motion
+  746 00000EBC         done_with_existflag
+  747 00000EBC         
+  748 00000EBC E59F070C        LDR              r0, =mothership_exist_on_board
+  749 00000EC0 E5D01000        LDRB             r1, [r0]
+  750 00000EC4 E3510000        CMP              r1, #0
+  751 00000EC8 1A000023        BNE              mother_already_exist
+  752 00000ECC         ;add rng to % show up rate
+  753 00000ECC         
+  754 00000ECC         
+  755 00000ECC E3A0B032        MOV              r11, #50
+  756 00000ED0         
+  757 00000ED0 E59F06FC        LDR              r0, =T0TC
+  758 00000ED4 E5901000        LDR              r1, [r0]
+  759 00000ED8 E3E020FF        LDR              r2, =0xFFFFFF00
+  760 00000EDC E1C11002        BIC              r1, r1 , r2
+  761 00000EE0 E59F0650        LDR              r0, =keystork_rng_counter
+  762 00000EE4 E5902000        LDR              r2, [r0]
+  763 00000EE8 E0811002        ADD              r1, r1 ,r2
+  764 00000EEC E59F0648        LDR              r0, =current_keyboard_rng_input
+  765 00000EF0 E5902000        LDR              r2, [r0]
+  766 00000EF4 E0811002        ADD              r1, r1 ,r2
+  767 00000EF8 E59F0668        LDR              r0,=mothership_appears_count
+  768 00000EFC E5902000        LDR              r2, [r0]
+  769 00000F00 E0811002        ADD              r1, r1 , r2
+  770 00000F04 E3E020FF        LDR              r2, =0xFFFFFF00
+  771 00000F08 E1C11002        BIC              r1, r1 , r2
+  772 00000F0C E1A0800B        MOV              r8, r11     ; immediates enters
+                                                             here shows the ran
+                                                            ge of random number
+                                                            s
+  773 00000F10         continue_subb
+  774 00000F10 E1510008        CMP              r1, r8
+  775 00000F14 BA000001        BLT              done_diving
+  776 00000F18 E0411008        SUB              r1, r1, r8
+  777 00000F1C EAFFFFFB        B                continue_subb
+  778 00000F20         done_diving
+  779 00000F20 E1A0C001        MOV              r12 , r1
+  780 00000F24         
+  781 00000F24         
+  782 00000F24         
+  783 00000F24         
+  784 00000F24         
+  785 00000F24         
+
+
+
+ARM Macro Assembler    Page 29 
+
+
+  786 00000F24 E35C0001        CMP              r12, #1
+  787 00000F28 1A000012        BNE              do_nothing
+  788 00000F2C E59F0634        LDR              r0,=mothership_appears_count
+  789 00000F30 E5901000        LDR              r1, [r0]
+  790 00000F34 E2811001        ADD              r1, r1 , #1
+  791 00000F38         
+  792 00000F38 E5C01000        STRB             r1, [r0]
+  793 00000F3C E3A0B002        MOV              r11, #2
+  794 00000F40 EBFFFFFE        BL               rng
+  795 00000F44 E35C0001        CMP              r12, #1
+  796 00000F48 1A000001        BNE              idc_about_names
+  797 00000F4C EBFFFFFE        BL               mothership_starting_showup_left
+  798 00000F50 EA000008        B                do_nothing
+  799 00000F54         idc_about_names
+  800 00000F54 EBFFFFFE        BL               mothership_starting_showup_righ
+t
+  801 00000F58 EA000006        B                do_nothing  ;BL from_left_motio
+                                                            n
+  802 00000F5C         
+  803 00000F5C         mother_already_exist
+  804 00000F5C         
+  805 00000F5C E59F0674        LDR              r0, =mothership_left_or_right_d
+ir
+  806 00000F60 E5D01000        LDRB             r1, [r0]
+  807 00000F64 E3510000        CMP              r1, #0
+  808 00000F68 0A000001        BEQ              nonames
+  809 00000F6C EBFFFFFE        BL               mothership_left_move
+  810 00000F70 EA000000        B                do_nothing
+  811 00000F74         nonames
+  812 00000F74 EBFFFFFE        BL               mothership_right_move
+  813 00000F78         
+  814 00000F78         do_nothing
+  815 00000F78 E59F065C        LDR              r0, =enemy_proj_on_board
+  816 00000F7C E5D01000        LDRB             r1, [r0]
+  817 00000F80 E3510001        CMP              r1, #1
+  818 00000F84 0A000001        BEQ              denied_enemy_proj
+  819 00000F88         
+  820 00000F88         ;LTORG
+  821 00000F88         
+  822 00000F88 EBFFFFFE        BL               eject_enemy_proj
+  823 00000F8C EA000000        B                idkkkkk
+  824 00000F90         denied_enemy_proj
+  825 00000F90 EBFFFFFE        BL               enemy_proj_motion
+  826 00000F94         idkkkkk
+  827 00000F94 EBFFFFFE        BL               update_map
+  828 00000F98         
+  829 00000F98         skip_cuz_soft_timer
+  830 00000F98 E8BD5FFF        LDMFD            SP!, {r0-r12, lr}
+  831 00000F9C E3833002        ORR              r3, r3, #2
+  832 00000FA0 E5823000        STR              r3, [r2]
+  833 00000FA4         
+  834 00000FA4         UART0_int
+  835 00000FA4 E59F2634        LDR              r2, =0xE000C008
+  836 00000FA8 E5923000        LDR              r3, [r2]
+  837 00000FAC E3130001        TST              r3, #1
+  838 00000FB0 1A00002F        BNE              EINT1
+  839 00000FB4 E92D5FFF        STMFD            SP!, {r0-r12, lr}
+  840 00000FB8         
+  841 00000FB8 E59F0624        LDR              r0, =U0TRR
+
+
+
+ARM Macro Assembler    Page 30 
+
+
+  842 00000FBC E5901000        LDR              r1, [r0]
+  843 00000FC0         
+  844 00000FC0 E59F0570        LDR              r0, =keystork_rng_counter
+  845 00000FC4 E5902000        LDR              r2, [r0]
+  846 00000FC8 E2822001        ADD              r2, r2 , #1
+  847 00000FCC E5802000        STR              r2, [r0]
+  848 00000FD0         
+  849 00000FD0 E3510041        CMP              r1, #0x41
+  850 00000FD4 1A00000C        BNE              not_moving_left
+  851 00000FD8         
+  852 00000FD8 E59F055C        LDR              r0, =current_keyboard_rng_input
+  853 00000FDC E5801000        STR              r1, [r0]
+  854 00000FE0         
+  855 00000FE0 E59F0600        LDR              r0,=ship_location
+  856 00000FE4 E5901000        LDR              r1, [r0]
+  857 00000FE8 E59F0554        LDR              r0, =promptoffset
+  858 00000FEC E5902000        LDR              r2, [r0]
+  859 00000FF0 E59F35F4        LDR              r3, =0x179
+  860 00000FF4 E0822003        ADD              r2, r2 , r3
+  861 00000FF8 E1510002        CMP              r1, r2
+  862 00000FFC 0A000001        BEQ              cant_move_left
+  863 00001000 EBFFFFFE        BL               ship_shift_left
+  864 00001004 EBFFFFFE        BL               update_map
+  865 00001008         ;LTORG
+  866 00001008         cant_move_left
+  867 00001008 EA000018        B                done_once_key_input
+  868 0000100C         
+  869 0000100C         not_moving_left
+  870 0000100C E3510044        CMP              r1, #0x44
+  871 00001010 1A00000C        BNE              not_moving_right
+  872 00001014         
+  873 00001014 E59F0520        LDR              r0, =current_keyboard_rng_input
+  874 00001018 E5801000        STR              r1, [r0]
+  875 0000101C         
+  876 0000101C E59F05C4        LDR              r0,=ship_location
+  877 00001020 E5901000        LDR              r1, [r0]
+  878 00001024 E59F0518        LDR              r0, =promptoffset
+  879 00001028 E5902000        LDR              r2, [r0]
+  880 0000102C E59F35BC        LDR              r3, =0x18D
+  881 00001030 E0822003        ADD              r2, r2 , r3
+  882 00001034 E1510002        CMP              r1, r2
+  883 00001038 0A000001        BEQ              cant_move_right
+  884 0000103C         
+  885 0000103C EBFFFFFE        BL               ship_shift_right
+  886 00001040 EBFFFFFE        BL               update_map
+  887 00001044         ;LTORG
+  888 00001044         cant_move_right
+  889 00001044 EA000009        B                done_once_key_input
+  890 00001048         not_moving_right
+  891 00001048 E3510020        CMP              r1, #0x20
+  892 0000104C 1A000007        BNE              done_once_key_input ;ADDED THIS
+                                                            
+  893 00001050         
+  894 00001050         
+  895 00001050         
+  896 00001050 E59F04E4        LDR              r0, =current_keyboard_rng_input
+  897 00001054 E5801000        STR              r1, [r0]
+  898 00001058 E59F056C        LDR              r0, =proj_exist_on_board_flag ;
+                                                                   EQU 0x400074
+
+
+
+ARM Macro Assembler    Page 31 
+
+
+                                                            10
+  899 0000105C E5D01000        LDRB             r1, [r0]
+  900 00001060 E3510001        CMP              r1, #1
+  901 00001064 0A000000        BEQ              exist_on_board2
+  902 00001068         
+  903 00001068 EBFFFFFE        BL               eject_proj  ;This line is for t
+                                                            est purpose, will b
+                                                            e delete once i com
+                                                            pare the proj_exist
+                                                            _flage
+  904 0000106C         exist_on_board2
+  905 0000106C         
+  906 0000106C 1AFFFFFF        BNE              done_once_key_input
+  907 00001070         
+  908 00001070         
+  909 00001070         
+  910 00001070         done_once_key_input
+  911 00001070         
+  912 00001070         ;ADDED ALL OF THIS
+  913 00001070         
+  914 00001070 E8BD5FFF        LDMFD            SP!, {r0-r12, lr}
+  915 00001074         
+  916 00001074         
+  917 00001074         EINT1                                ; Check for EINT1 i
+                                                            nterrupt
+  918 00001074         ;ADD ALL OF THIS
+  919 00001074         ;using this to pause game
+  920 00001074 E59F0578        LDR              r0, =0xE01FC140
+  921 00001078 E5901000        LDR              r1, [r0]
+  922 0000107C E3110002        TST              r1, #2      ;if second bit of r
+                                                            1 is 1 that means c
+                                                            learing the bit, th
+                                                            us skip
+  923 00001080 0A00000F        BEQ              FIQ_Exit
+  924 00001084         ;start handling
+  925 00001084 E92D5FFF        STMFD            SP!, {r0-r12, lr} 
+                                                            ; Save registers 
+  926 00001088         ;pauses game, perhaps also show score on 7 seg. 
+  927 00001088         
+  928 00001088         
+  929 00001088 E59F04C0        LDR              r0, =paused_game_flag
+  930 0000108C E5D01000        LDRB             r1, [r0]
+  931 00001090 E3510000        CMP              r1, #0
+  932 00001094 1A000002        BNE              not_1
+  933 00001098 E3A01001        MOV              r1, #1
+  934 0000109C E5C01000        STRB             r1, [r0]
+  935 000010A0 EA000001        B                done_flagging
+  936 000010A4         not_1
+  937 000010A4 E3A03000        MOV              r3, #0
+  938 000010A8 E5C03000        STRB             r3, [r0]    ;resumes game
+  939 000010AC         done_flagging
+  940 000010AC EBFFFFFE        BL               newline
+  941 000010B0 E59F0540        LDR              r0, =prompt1
+  942 000010B4 EBFFFFFE        BL               output_string
+  943 000010B8         
+  944 000010B8 E8BD5FFF        LDMFD            SP!, {r0-r12, lr} 
+                                                            ; Restore registers
+                                                            
+  945 000010BC E3811002        ORR              r1, r1, #2  ; Clear Interrupt
+
+
+
+ARM Macro Assembler    Page 32 
+
+
+  946 000010C0 E5801000        STR              r1, [r0]
+  947 000010C4         
+  948 000010C4         FIQ_Exit
+  949 000010C4 E8BD5FFF        LDMFD            SP!, {r0-r12, lr}
+  950 000010C8 E25EF004        SUBS             pc, lr, #4
+  951 000010CC         
+  952 000010CC         
+  953 000010CC         endgame
+  954 000010CC E92D4000        STMFD            sp!, {lr}
+  955 000010D0 E59F0524        LDR              r0, =IO1SET
+  956 000010D4 E3A0180F        LDR              r1, =0xF0000
+  957 000010D8 E5801000        STR              r1, [r0]
+  958 000010DC E59F04BC        LDR              r0, =IO0CLR
+  959 000010E0 E3A01826        LDR              r1, =0x260000 ;LDR r1, =0x8000
+  960 000010E4 E5801000        STR              r1, [r0]    ;
+  961 000010E8 E59F04B4        LDR              r0, =IO0SET
+  962 000010EC E3A01602        LDR              r1, =0x200000
+  963 000010F0 E5801000        STR              r1, [r0]
+  964 000010F4         
+  965 000010F4         
+  966 000010F4         
+  967 000010F4         
+  968 000010F4         
+  969 000010F4         
+  970 000010F4         
+  971 000010F4         ;-------------------------------------------------------
+                       -
+  972 000010F4 E59F0468        LDR              r0, =current_score_1000
+  973 000010F8 E5901000        LDR              r1, [r0]
+  974 000010FC E59F240C        LDR              r2, =total_score_1000
+  975 00001100 E5923000        LDR              r3, [r2]
+  976 00001104 E0833001        ADD              r3, r3, r1
+  977 00001108 E5823000        STR              r3, [r2]
+  978 0000110C         
+  979 0000110C         ;-------------------------------------------------------
+                       - 
+  980 0000110C         ;-------------------------------------------------------
+                       - 
+  981 0000110C         
+  982 0000110C E59F044C        LDR              r0, =current_score_100
+  983 00001110 E5901000        LDR              r1, [r0]
+  984 00001114 E59F23F0        LDR              r2, =total_score_100
+  985 00001118 E5923000        LDR              r3, [r2]
+  986 0000111C E0833001        ADD              r3, r3, r1
+  987 00001120         
+  988 00001120 E353000A        CMP              r3, #10
+  989 00001124 BA000004        BLT              its_totally_fine_3
+  990 00001128 E243300A        SUB              r3, r3, #10
+  991 0000112C E59F43DC        LDR              r4, =total_score_1000
+  992 00001130 E5945000        LDR              r5, [r4]
+  993 00001134 E2855001        ADD              r5, r5 , #1
+  994 00001138 E5845000        STR              r5, [r4]
+  995 0000113C         its_totally_fine_3
+  996 0000113C E5823000        STR              r3, [r2]
+  997 00001140         
+  998 00001140         
+  999 00001140         ;-------------------------------------------------------
+                       - 
+ 1000 00001140         ;-------------------------------------------------------
+
+
+
+ARM Macro Assembler    Page 33 
+
+
+                       -  
+ 1001 00001140         
+ 1002 00001140 E59F0414        LDR              r0, =current_score_10
+ 1003 00001144 E5901000        LDR              r1, [r0]
+ 1004 00001148 E59F23B8        LDR              r2, =total_score_10
+ 1005 0000114C E5923000        LDR              r3, [r2]
+ 1006 00001150 E0833001        ADD              r3, r3, r1
+ 1007 00001154         
+ 1008 00001154 E353000A        CMP              r3, #10
+ 1009 00001158 BA00000B        BLT              its_totally_fine_2
+ 1010 0000115C E243300A        SUB              r3, r3, #10
+ 1011 00001160 E59F43A4        LDR              r4, =total_score_100
+ 1012 00001164 E5945000        LDR              r5, [r4]
+ 1013 00001168 E2855001        ADD              r5, r5, #1
+ 1014 0000116C E355000A        CMP              r5, #10
+ 1015 00001170 BA000004        BLT              its_totally_fine_fine_2
+ 1016 00001174 E245500A        SUB              r5, r5 , #10
+ 1017 00001178 E59F6390        LDR              r6, =total_score_1000
+ 1018 0000117C E5967000        LDR              r7, [r6]
+ 1019 00001180 E2877001        ADD              r7, r7, #1
+ 1020 00001184 E5867000        STR              r7, [r6]
+ 1021 00001188         its_totally_fine_fine_2
+ 1022 00001188 E5845000        STR              r5, [r4]
+ 1023 0000118C         its_totally_fine_2
+ 1024 0000118C E5823000        STR              r3, [r2]
+ 1025 00001190         
+ 1026 00001190         
+ 1027 00001190         ;-------------------------------------------------------
+                       - 
+ 1028 00001190         ;-------------------------------------------------------
+                       - 
+ 1029 00001190         
+ 1030 00001190 E59F03C0        LDR              r0, =current_score_1
+ 1031 00001194 E5901000        LDR              r1, [r0]
+ 1032 00001198 E59F2364        LDR              r2, =total_score_1
+ 1033 0000119C E5923000        LDR              r3, [r2]
+ 1034 000011A0 E0833001        ADD              r3, r3, r1
+ 1035 000011A4         ;r4,r5,r6,r7,r8,r9
+ 1036 000011A4 E353000A        CMP              r3, #10
+ 1037 000011A8 BA000012        BLT              its_totally_fine
+ 1038 000011AC E243300A        SUB              r3, r3, #10
+ 1039 000011B0 E59F4350        LDR              r4, =total_score_10
+ 1040 000011B4 E5945000        LDR              r5, [r4]
+ 1041 000011B8 E2855001        ADD              r5, r5, #1  ; r5 is 10 digit
+ 1042 000011BC E355000A        CMP              r5, #10
+ 1043 000011C0 BA00000B        BLT              its_totally_fine_fine
+ 1044 000011C4 E245500A        SUB              r5, r5, #10
+ 1045 000011C8 E59F633C        LDR              r6, =total_score_100
+ 1046 000011CC E5967000        LDR              r7, [r6]
+ 1047 000011D0 E2877001        ADD              r7, r7, #1
+ 1048 000011D4 E357000A        CMP              r7, #10
+ 1049 000011D8 BA000004        BLT              its_totally_fine_fine_fine
+ 1050 000011DC E247700A        SUB              r7, r7, #10
+ 1051 000011E0 E59F8328        LDR              r8, =total_score_1000
+ 1052 000011E4 E5989000        LDR              r9, [r8]
+ 1053 000011E8 E2899001        ADD              r9, r9, #1
+ 1054 000011EC         
+ 1055 000011EC E5889000        STR              r9, [r8]
+ 1056 000011F0         its_totally_fine_fine_fine
+
+
+
+ARM Macro Assembler    Page 34 
+
+
+ 1057 000011F0 E5867000        STR              r7, [r6]
+ 1058 000011F4         its_totally_fine_fine
+ 1059 000011F4 E5845000        STR              r5, [r4]
+ 1060 000011F8         its_totally_fine
+ 1061 000011F8 E5823000        STR              r3, [r2]
+ 1062 000011FC         
+ 1063 000011FC         
+ 1064 000011FC         ;-------------------------------------------------------
+                       - 
+ 1065 000011FC         
+ 1066 000011FC         
+ 1067 000011FC         
+ 1068 000011FC         
+ 1069 000011FC         
+ 1070 000011FC         
+ 1071 000011FC         
+ 1072 000011FC         
+ 1073 000011FC         
+ 1074 000011FC         
+ 1075 000011FC         
+ 1076 000011FC         
+ 1077 000011FC         
+ 1078 000011FC         
+ 1079 000011FC         
+ 1080 000011FC         
+ 1081 000011FC         
+ 1082 000011FC         
+ 1083 000011FC         
+ 1084 000011FC         
+ 1085 000011FC         
+ 1086 000011FC         
+ 1087 000011FC         
+ 1088 000011FC         
+ 1089 000011FC         
+ 1090 000011FC         
+ 1091 000011FC         
+ 1092 000011FC         
+ 1093 000011FC         
+ 1094 000011FC         
+ 1095 000011FC         
+ 1096 000011FC         
+ 1097 000011FC         
+ 1098 000011FC         
+ 1099 000011FC         
+ 1100 000011FC         
+ 1101 000011FC         
+ 1102 000011FC         
+ 1103 000011FC         
+ 1104 000011FC         
+ 1105 000011FC         
+ 1106 000011FC         
+ 1107 000011FC         
+ 1108 000011FC         
+ 1109 000011FC         
+ 1110 000011FC         
+ 1111 000011FC         
+ 1112 000011FC         
+ 1113 000011FC         
+ 1114 000011FC         
+
+
+
+ARM Macro Assembler    Page 35 
+
+
+ 1115 000011FC         
+ 1116 000011FC         
+ 1117 000011FC         
+ 1118 000011FC         
+ 1119 000011FC         
+ 1120 000011FC E59F03FC        LDR              r0, =promptend
+ 1121 00001200 E59F53FC        LDR              r5, =promptend_offset
+ 1122 00001204 E5850000        STR              r0, [r5]
+ 1123 00001208         
+ 1124 00001208 E59F03F8        LDR              r0, =score_location_1
+ 1125 0000120C E5952000        LDR              r2, [r5]
+ 1126 00001210 E28220A2        ADD              r2, r2, #0xA2 ;score offset
+ 1127 00001214 E5802000        STR              r2, [r0]
+ 1128 00001218 E59F42F0        LDR              r4, =total_score_1000
+ 1129 0000121C E5D46000        LDRB             r6, [r4]
+ 1130 00001220 E2866030        ADD              r6, r6, #0x30
+ 1131 00001224 E5C26000        STRB             r6, [r2]
+ 1132 00001228         
+ 1133 00001228 E59F03DC        LDR              r0, =score_location_2
+ 1134 0000122C E5952000        LDR              r2, [r5]
+ 1135 00001230 E28220A3        ADD              r2, r2, #0xA3 ;score offset
+ 1136 00001234 E5802000        STR              r2, [r0]
+ 1137 00001238 E59F42CC        LDR              r4, =total_score_100
+ 1138 0000123C E5D46000        LDRB             r6, [r4]
+ 1139 00001240 E2866030        ADD              r6, r6, #0x30
+ 1140 00001244 E5C26000        STRB             r6, [r2]
+ 1141 00001248         
+ 1142 00001248 E59F03C0        LDR              r0, =score_location_3
+ 1143 0000124C E5952000        LDR              r2, [r5]
+ 1144 00001250 E28220A4        ADD              r2, r2, #0xA4 ;score offset
+ 1145 00001254 E5802000        STR              r2, [r0]
+ 1146 00001258 E59F42A8        LDR              r4, =total_score_10
+ 1147 0000125C E5D46000        LDRB             r6, [r4]
+ 1148 00001260 E2866030        ADD              r6, r6, #0x30
+ 1149 00001264 E5C26000        STRB             r6, [r2]
+ 1150 00001268         
+ 1151 00001268 E59F03A4        LDR              r0, =score_location_4
+ 1152 0000126C E5952000        LDR              r2, [r5]
+ 1153 00001270 E28220A5        ADD              r2, r2, #0xA5 ;score offset
+ 1154 00001274 E5802000        STR              r2, [r0]
+ 1155 00001278 E59F4284        LDR              r4, =total_score_1
+ 1156 0000127C E5D46000        LDRB             r6, [r4]
+ 1157 00001280 E2866030        ADD              r6, r6, #0x30
+ 1158 00001284 E5C26000        STRB             r6, [r2]
+ 1159 00001288         
+ 1160 00001288 E59F0388        LDR              r0, =time_location_1
+ 1161 0000128C E5952000        LDR              r2, [r5]
+ 1162 00001290 E28220F0        ADD              r2, r2, #0xF0 ;time offset
+ 1163 00001294 E5802000        STR              r2, [r0]
+ 1164 00001298 E59F423C        LDR              r4, =time_left_100
+ 1165 0000129C E5D46000        LDRB             r6, [r4]
+ 1166 000012A0 E5C26000        STRB             r6, [r2]
+ 1167 000012A4         
+ 1168 000012A4 E59F0370        LDR              r0, =time_location_2
+ 1169 000012A8 E5952000        LDR              r2, [r5]
+ 1170 000012AC E28220F1        ADD              r2, r2, #0xF1 ;time offset
+ 1171 000012B0 E5802000        STR              r2, [r0]
+ 1172 000012B4 E59F421C        LDR              r4, =time_left_10
+ 1173 000012B8 E5D46000        LDRB             r6, [r4]
+
+
+
+ARM Macro Assembler    Page 36 
+
+
+ 1174 000012BC E5C26000        STRB             r6, [r2]
+ 1175 000012C0         
+ 1176 000012C0 E59F0358        LDR              r0, =time_location_3
+ 1177 000012C4 E5952000        LDR              r2, [r5]
+ 1178 000012C8 E28220F2        ADD              r2, r2, #0xF2 ;time offset
+ 1179 000012CC E5802000        STR              r2, [r0]
+ 1180 000012D0 E59F41FC        LDR              r4, =time_left_1
+ 1181 000012D4 E5D46000        LDRB             r6, [r4]
+ 1182 000012D8 E5C26000        STRB             r6, [r2]
+ 1183 000012DC         
+ 1184 000012DC E59F031C        LDR              r0, =promptend
+ 1185 000012E0 EBFFFFFE        BL               output_string
+ 1186 000012E4         
+ 1187 000012E4         
+ 1188 000012E4         
+ 1189 000012E4         
+ 1190 000012E4         
+ 1191 000012E4 E59F01E0        LDR              r0, =prompt_storage_offset
+ 1192 000012E8 E5901000        LDR              r1, [r0]
+ 1193 000012EC E3A02000        MOV              r2, #0
+ 1194 000012F0 E5C12000        STRB             r2, [r1]
+ 1195 000012F4 E5C12001        STRB             r2, [r1,#1]
+ 1196 000012F8 E5C12002        STRB             r2, [r1,#2]
+ 1197 000012FC E5C12003        STRB             r2, [r1,#3]
+ 1198 00001300 E5C12004        STRB             r2, [r1,#4]
+ 1199 00001304 E5C12005        STRB             r2, [r1,#5]
+ 1200 00001308         
+ 1201 00001308 E59F01C0        LDR              r0, =prompt_storage_offset_copy
+ 1202 0000130C E5908000        LDR              r8, [r0]
+ 1203 00001310 E3A0C030        MOV              r12, #0x30
+ 1204 00001314         Loop_printingout_shit
+ 1205 00001314         
+ 1206 00001314         ; dont touch r1, 
+ 1207 00001314 E5D82000        LDRB             r2, [r8]
+ 1208 00001318 E3520000        CMP              r2, #0
+ 1209 0000131C 0A00002D        BEQ              done_printing_shit
+ 1210 00001320         
+ 1211 00001320 E59F02FC        LDR              r0, =promptend_level
+ 1212 00001324 EBFFFFFE        BL               output_string
+ 1213 00001328 E1A0100C        MOV              r1, r12
+ 1214 0000132C E28CC001        ADD              r12, r12, #1
+ 1215 00001330 EBFFFFFE        BL               output_character
+ 1216 00001334         
+ 1217 00001334 E59F02EC        LDR              r0, =promptend_levelscore ; pri
+                                                            nting out score
+ 1218 00001338 EBFFFFFE        BL               output_string
+ 1219 0000133C         
+ 1220 0000133C E4D82001        LDRB             r2, [r8],#1
+ 1221 00001340 E1A01002        MOV              r1, r2
+ 1222 00001344 EBFFFFFE        BL               output_character
+ 1223 00001348 E4D82001        LDRB             r2, [r8],#1
+ 1224 0000134C E1A01002        MOV              r1, r2
+ 1225 00001350 EBFFFFFE        BL               output_character
+ 1226 00001354 E4D82001        LDRB             r2, [r8],#1
+ 1227 00001358 E1A01002        MOV              r1, r2
+ 1228 0000135C EBFFFFFE        BL               output_character
+ 1229 00001360 E4D82001        LDRB             r2, [r8],#1
+ 1230 00001364 E1A01002        MOV              r1, r2
+ 1231 00001368 EBFFFFFE        BL               output_character
+
+
+
+ARM Macro Assembler    Page 37 
+
+
+ 1232 0000136C         
+ 1233 0000136C E59F02B8        LDR              r0, =promptend_leveldeathcount 
+                                                            ; printingout death
+                                                            _count
+ 1234 00001370 EBFFFFFE        BL               output_string
+ 1235 00001374         
+ 1236 00001374 E4D82001        LDRB             r2, [r8],#1
+ 1237 00001378 E1A01002        MOV              r1, r2
+ 1238 0000137C EBFFFFFE        BL               output_character
+ 1239 00001380         
+ 1240 00001380 E59F02A8        LDR              r0, =promptend_levelmothership
+ 1241 00001384 EBFFFFFE        BL               output_string
+ 1242 00001388         
+ 1243 00001388 E4D82001        LDRB             r2, [r8],#1
+ 1244 0000138C E1A01002        MOV              r1, r2
+ 1245 00001390 EBFFFFFE        BL               output_character
+ 1246 00001394         
+ 1247 00001394 E3A0102F        MOV              r1, #0x2F
+ 1248 00001398 EBFFFFFE        BL               output_character
+ 1249 0000139C         
+ 1250 0000139C E4D82001        LDRB             r2, [r8],#1
+ 1251 000013A0 E1A01002        MOV              r1, r2
+ 1252 000013A4 EBFFFFFE        BL               output_character
+ 1253 000013A8         
+ 1254 000013A8 E59F0284        LDR              r0, =promptend_leveltime
+ 1255 000013AC EBFFFFFE        BL               output_string
+ 1256 000013B0         
+ 1257 000013B0 E4D82001        LDRB             r2, [r8],#1
+ 1258 000013B4 E1A01002        MOV              r1, r2
+ 1259 000013B8 EBFFFFFE        BL               output_character
+ 1260 000013BC         
+ 1261 000013BC E4D82001        LDRB             r2, [r8],#1
+ 1262 000013C0         ;ADD r2, r2, #0x30
+ 1263 000013C0 E1A01002        MOV              r1, r2
+ 1264 000013C4 EBFFFFFE        BL               output_character
+ 1265 000013C8         
+ 1266 000013C8 E4D82001        LDRB             r2, [r8],#1
+ 1267 000013CC E1A01002        MOV              r1, r2
+ 1268 000013D0 EBFFFFFE        BL               output_character
+ 1269 000013D4         
+ 1270 000013D4 EAFFFFCE        B                Loop_printingout_shit
+ 1271 000013D8         
+ 1272 000013D8         done_printing_shit
+ 1273 000013D8         
+ 1274 000013D8 E59F0244        LDR              r0, =promptend_level
+ 1275 000013DC EBFFFFFE        BL               output_string
+ 1276 000013E0         
+ 1277 000013E0 E59F014C        LDR              r0, =current_level
+ 1278 000013E4 EBFFFFFE        BL               output_string
+ 1279 000013E8         
+ 1280 000013E8 E59F0238        LDR              r0, =promptend_levelscore
+ 1281 000013EC EBFFFFFE        BL               output_string
+ 1282 000013F0         
+ 1283 000013F0 E59F016C        LDR              r0, =current_score_1000
+ 1284 000013F4 E5901000        LDR              r1, [r0]
+ 1285 000013F8 E2811030        ADD              r1, r1, #0x30
+ 1286 000013FC E5801000        STR              r1, [r0]
+ 1287 00001400 EBFFFFFE        BL               output_string
+ 1288 00001404         
+
+
+
+ARM Macro Assembler    Page 38 
+
+
+ 1289 00001404 E59F0154        LDR              r0, =current_score_100
+ 1290 00001408 E5901000        LDR              r1, [r0]
+ 1291 0000140C E2811030        ADD              r1, r1, #0x30
+ 1292 00001410 E5801000        STR              r1, [r0]
+ 1293 00001414 EBFFFFFE        BL               output_string
+ 1294 00001418         
+ 1295 00001418 E59F013C        LDR              r0, =current_score_10
+ 1296 0000141C E5901000        LDR              r1, [r0]
+ 1297 00001420 E2811030        ADD              r1, r1, #0x30
+ 1298 00001424 E5801000        STR              r1, [r0]
+ 1299 00001428 EBFFFFFE        BL               output_string
+ 1300 0000142C         
+ 1301 0000142C E59F0124        LDR              r0, =current_score_1
+ 1302 00001430 E5901000        LDR              r1, [r0]
+ 1303 00001434 E2811030        ADD              r1, r1, #0x30
+ 1304 00001438 E5801000        STR              r1, [r0]
+ 1305 0000143C EBFFFFFE        BL               output_string
+ 1306 00001440         
+ 1307 00001440 E59F01E4        LDR              r0, =promptend_leveldeathcount
+ 1308 00001444 EBFFFFFE        BL               output_string
+ 1309 00001448         
+ 1310 00001448         
+ 1311 00001448 E59F00E0        LDR              r0, =lives
+ 1312 0000144C E5901000        LDR              r1, [r0]
+ 1313 00001450 E2611004        RSB              r1, r1, #4
+ 1314 00001454 E2811030        ADD              r1, r1, #0x30
+ 1315 00001458 EBFFFFFE        BL               output_character
+ 1316 0000145C         
+ 1317 0000145C E59F01CC        LDR              r0, =promptend_levelmothership
+ 1318 00001460 EBFFFFFE        BL               output_string
+ 1319 00001464         
+ 1320 00001464 E59F0100        LDR              r0, =mothership_appears_hit
+ 1321 00001468 E5D01000        LDRB             r1, [r0]
+ 1322 0000146C E2811030        ADD              r1, r1 , #0x30
+ 1323 00001470 EBFFFFFE        BL               output_character
+ 1324 00001474         
+ 1325 00001474 E3A0102F        MOV              r1, #0x2F
+ 1326 00001478 EBFFFFFE        BL               output_character
+ 1327 0000147C         
+ 1328 0000147C E59F00E4        LDR              r0, =mothership_appears_count
+ 1329 00001480 E5D01000        LDRB             r1, [r0]
+ 1330 00001484 E2811030        ADD              r1, r1, #0x30
+ 1331 00001488 EBFFFFFE        BL               output_character
+ 1332 0000148C         
+ 1333 0000148C E59F01A0        LDR              r0, =promptend_leveltime
+ 1334 00001490 EBFFFFFE        BL               output_string
+ 1335 00001494         
+ 1336 00001494 E59F0040        LDR              r0, =time_left_100
+ 1337 00001498 E5D01000        LDRB             r1, [r0]
+ 1338 0000149C EBFFFFFE        BL               output_character
+ 1339 000014A0 E59F0030        LDR              r0, =time_left_10
+ 1340 000014A4 E5D01000        LDRB             r1, [r0]
+ 1341 000014A8 EBFFFFFE        BL               output_character
+ 1342 000014AC E59F0020        LDR              r0, =time_left_1
+ 1343 000014B0 E5D01000        LDRB             r1, [r0]
+ 1344 000014B4 EBFFFFFE        BL               output_character
+ 1345 000014B8         
+ 1346 000014B8         
+ 1347 000014B8         
+
+
+
+ARM Macro Assembler    Page 39 
+
+
+ 1348 000014B8         infinity_loop
+ 1349 000014B8         ; CHECK FOR ENTER KEY TO BRANCH TO LAB7
+ 1350 000014B8 EAFFFFFE        B                infinity_loop
+ 1351 000014BC         
+ 1352 000014BC         
+ 1353 000014BC E8BD4000        LDMFD            sp!, {lr}
+ 1354 000014C0 E12FFF1E        BX               lr
+ 1355 000014C4         
+ 1356 000014C4                 END
+              40006954 
+              00000000 
+              40007E20 
+              40007E24 
+              40006944 
+              40006948 
+              4000694C 
+              40007D00 
+              00009580 
+              00008780 
+              0000A680 
+              0000B680 
+              0000B780 
+              0000A780 
+              40005040 
+              40007B00 
+              40006920 
+              40006924 
+              40006928 
+              4000692C 
+              40006930 
+              40006934 
+              40006938 
+              40007AA0 
+              E0028008 
+              0026B7FF 
+              E0028018 
+              40005000 
+              40000200 
+              40007990 
+              40007994 
+              00000000 
+              40007100 
+              00000106 
+              40006940 
+              40005010 
+              00000000 
+              40006900 
+              40006904 
+              40006908 
+              4000690C 
+              40007E28 
+              40007E2C 
+              00000000 
+              E002C000 
+              E000C004 
+              E0004004 
+              E0004014 
+              E000401C 
+              E0008004 
+
+
+
+ARM Macro Assembler    Page 40 
+
+
+              E0008014 
+              E000801C 
+              FFFFF000 
+              00008070 
+              E01FC148 
+              E002800C 
+              E0028004 
+              00000000 
+              00000000 
+              00000000 
+              E0004000 
+              E0008000 
+              0026B784 
+              0026B788 
+              0026B790 
+              0026B7A0 
+              40007410 
+              400078A0 
+              E0004008 
+              40007860 
+              400074B0 
+              E000C008 
+              E000C000 
+              40006000 
+              00000179 
+              0000018D 
+              E01FC140 
+              00000000 
+              E0028014 
+              00000000 
+              40007A00 
+              40007A10 
+              40007A18 
+              40007A20 
+              40007A28 
+              40007A30 
+              40007A38 
+              40007A40 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+Command Line: --debug --xref --diag_suppress=9931 --apcs=interwork --depend=.\o
+bjects\lab7.d -o.\objects\lab7.o -IC:\Keil_v5\ARM\RV31\INC -IC:\Keil_v5\ARM\CMS
+IS\Include -IC:\Keil_v5\ARM\Inc\Philips --predefine="__EVAL SETA 1" --predefine
+="__UVISION_VERSION SETA 518" --list=.\listings\lab7.lst lab7.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+EINT1 00001074
+
+Symbol: EINT1
+   Definitions
+      At line 917 in file lab7.s
+   Uses
+      At line 838 in file lab7.s
+Comment: EINT1 used once
+FIQ_Exit 000010C4
+
+Symbol: FIQ_Exit
+   Definitions
+      At line 948 in file lab7.s
+   Uses
+      At line 923 in file lab7.s
+Comment: FIQ_Exit used once
+FIQ_Handler 00000C28
+
+Symbol: FIQ_Handler
+   Definitions
+      At line 518 in file lab7.s
+   Uses
+      At line 3 in file lab7.s
+Comment: FIQ_Handler used once
+Loop_printingout_shit 00001314
+
+Symbol: Loop_printingout_shit
+   Definitions
+      At line 1204 in file lab7.s
+   Uses
+      At line 1270 in file lab7.s
+Comment: Loop_printingout_shit used once
+TIMER0 00000C2C
+
+Symbol: TIMER0
+   Definitions
+      At line 520 in file lab7.s
+   Uses
+      None
+Comment: TIMER0 unused
+TIMER1 00000C74
+
+Symbol: TIMER1
+   Definitions
+      At line 542 in file lab7.s
+   Uses
+      At line 524 in file lab7.s
+Comment: TIMER1 used once
+UART0_int 00000FA4
+
+Symbol: UART0_int
+   Definitions
+      At line 834 in file lab7.s
+   Uses
+      At line 546 in file lab7.s
+Comment: UART0_int used once
+cant_move_left 00001008
+
+Symbol: cant_move_left
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Relocatable symbols
+
+   Definitions
+      At line 866 in file lab7.s
+   Uses
+      At line 862 in file lab7.s
+Comment: cant_move_left used once
+cant_move_right 00001044
+
+Symbol: cant_move_right
+   Definitions
+      At line 888 in file lab7.s
+   Uses
+      At line 883 in file lab7.s
+Comment: cant_move_right used once
+continue_subb 00000F10
+
+Symbol: continue_subb
+   Definitions
+      At line 773 in file lab7.s
+   Uses
+      At line 777 in file lab7.s
+Comment: continue_subb used once
+continue_to 00000A88
+
+Symbol: continue_to
+   Definitions
+      At line 370 in file lab7.s
+   Uses
+      At line 343 in file lab7.s
+      At line 350 in file lab7.s
+      At line 357 in file lab7.s
+      At line 364 in file lab7.s
+
+copying_again_loop 000009A0
+
+Symbol: copying_again_loop
+   Definitions
+      At line 297 in file lab7.s
+   Uses
+      At line 302 in file lab7.s
+Comment: copying_again_loop used once
+denied_enemy_proj 00000F90
+
+Symbol: denied_enemy_proj
+   Definitions
+      At line 824 in file lab7.s
+   Uses
+      At line 818 in file lab7.s
+Comment: denied_enemy_proj used once
+do_nothing 00000F78
+
+Symbol: do_nothing
+   Definitions
+      At line 814 in file lab7.s
+   Uses
+      At line 787 in file lab7.s
+      At line 798 in file lab7.s
+      At line 801 in file lab7.s
+      At line 810 in file lab7.s
+
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Relocatable symbols
+
+done_copying 000009B4
+
+Symbol: done_copying
+   Definitions
+      At line 303 in file lab7.s
+   Uses
+      At line 301 in file lab7.s
+Comment: done_copying used once
+done_diving 00000F20
+
+Symbol: done_diving
+   Definitions
+      At line 778 in file lab7.s
+   Uses
+      At line 775 in file lab7.s
+Comment: done_diving used once
+done_flagging 000010AC
+
+Symbol: done_flagging
+   Definitions
+      At line 939 in file lab7.s
+   Uses
+      At line 935 in file lab7.s
+Comment: done_flagging used once
+done_once_key_input 00001070
+
+Symbol: done_once_key_input
+   Definitions
+      At line 910 in file lab7.s
+   Uses
+      At line 867 in file lab7.s
+      At line 889 in file lab7.s
+      At line 892 in file lab7.s
+      At line 906 in file lab7.s
+
+done_printing_shit 000013D8
+
+Symbol: done_printing_shit
+   Definitions
+      At line 1272 in file lab7.s
+   Uses
+      At line 1209 in file lab7.s
+Comment: done_printing_shit used once
+done_strobbing 00000E64
+
+Symbol: done_strobbing
+   Definitions
+      At line 716 in file lab7.s
+   Uses
+      At line 625 in file lab7.s
+      At line 659 in file lab7.s
+      At line 687 in file lab7.s
+
+done_with_existflag 00000EBC
+
+Symbol: done_with_existflag
+   Definitions
+      At line 746 in file lab7.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 736 in file lab7.s
+Comment: done_with_existflag used once
+end_of_code 00000BB8
+
+Symbol: end_of_code
+   Definitions
+      At line 480 in file lab7.s
+   Uses
+      At line 4 in file lab7.s
+Comment: end_of_code used once
+endgame 000010CC
+
+Symbol: endgame
+   Definitions
+      At line 953 in file lab7.s
+   Uses
+      At line 7 in file lab7.s
+      At line 532 in file lab7.s
+      At line 534 in file lab7.s
+      At line 536 in file lab7.s
+      At line 567 in file lab7.s
+
+exist_on_board 00000EA0
+
+Symbol: exist_on_board
+   Definitions
+      At line 737 in file lab7.s
+   Uses
+      At line 734 in file lab7.s
+Comment: exist_on_board used once
+exist_on_board2 0000106C
+
+Symbol: exist_on_board2
+   Definitions
+      At line 904 in file lab7.s
+   Uses
+      At line 901 in file lab7.s
+Comment: exist_on_board2 used once
+idc_about_names 00000F54
+
+Symbol: idc_about_names
+   Definitions
+      At line 799 in file lab7.s
+   Uses
+      At line 796 in file lab7.s
+Comment: idc_about_names used once
+idkkkkk 00000F94
+
+Symbol: idkkkkk
+   Definitions
+      At line 826 in file lab7.s
+   Uses
+      At line 823 in file lab7.s
+Comment: idkkkkk used once
+infinite_loop 00000AFC
+
+Symbol: infinite_loop
+   Definitions
+      At line 415 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 5 Alphabetic symbol ordering
+Relocatable symbols
+
+   Uses
+      At line 478 in file lab7.s
+Comment: infinite_loop used once
+infinity_loop 000014B8
+
+Symbol: infinity_loop
+   Definitions
+      At line 1348 in file lab7.s
+   Uses
+      At line 1350 in file lab7.s
+Comment: infinity_loop used once
+interrupts 00000000
+
+Symbol: interrupts
+   Definitions
+      At line 1 in file lab7.s
+   Uses
+      None
+Comment: interrupts unused
+its_reegular 00000D08
+
+Symbol: its_reegular
+   Definitions
+      At line 588 in file lab7.s
+   Uses
+      At line 582 in file lab7.s
+Comment: its_reegular used once
+its_regular 00000D0C
+
+Symbol: its_regular
+   Definitions
+      At line 591 in file lab7.s
+   Uses
+      At line 576 in file lab7.s
+Comment: its_regular used once
+its_totally_fine 000011F8
+
+Symbol: its_totally_fine
+   Definitions
+      At line 1060 in file lab7.s
+   Uses
+      At line 1037 in file lab7.s
+Comment: its_totally_fine used once
+its_totally_fine_2 0000118C
+
+Symbol: its_totally_fine_2
+   Definitions
+      At line 1023 in file lab7.s
+   Uses
+      At line 1009 in file lab7.s
+Comment: its_totally_fine_2 used once
+its_totally_fine_3 0000113C
+
+Symbol: its_totally_fine_3
+   Definitions
+      At line 995 in file lab7.s
+   Uses
+      At line 989 in file lab7.s
+Comment: its_totally_fine_3 used once
+
+
+
+ARM Macro Assembler    Page 6 Alphabetic symbol ordering
+Relocatable symbols
+
+its_totally_fine_fine 000011F4
+
+Symbol: its_totally_fine_fine
+   Definitions
+      At line 1058 in file lab7.s
+   Uses
+      At line 1043 in file lab7.s
+Comment: its_totally_fine_fine used once
+its_totally_fine_fine_2 00001188
+
+Symbol: its_totally_fine_fine_2
+   Definitions
+      At line 1021 in file lab7.s
+   Uses
+      At line 1015 in file lab7.s
+Comment: its_totally_fine_fine_2 used once
+its_totally_fine_fine_fine 000011F0
+
+Symbol: its_totally_fine_fine_fine
+   Definitions
+      At line 1056 in file lab7.s
+   Uses
+      At line 1049 in file lab7.s
+Comment: its_totally_fine_fine_fine used once
+lab7 000007F8
+
+Symbol: lab7
+   Definitions
+      At line 145 in file lab7.s
+   Uses
+      At line 2 in file lab7.s
+Comment: lab7 used once
+lab7_restart 00000960
+
+Symbol: lab7_restart
+   Definitions
+      At line 274 in file lab7.s
+   Uses
+      At line 6 in file lab7.s
+Comment: lab7_restart used once
+level_1 00000A34
+
+Symbol: level_1
+   Definitions
+      At line 344 in file lab7.s
+   Uses
+      At line 339 in file lab7.s
+Comment: level_1 used once
+level_2 00000A4C
+
+Symbol: level_2
+   Definitions
+      At line 351 in file lab7.s
+   Uses
+      At line 346 in file lab7.s
+Comment: level_2 used once
+level_3 00000A64
+
+Symbol: level_3
+
+
+
+ARM Macro Assembler    Page 7 Alphabetic symbol ordering
+Relocatable symbols
+
+   Definitions
+      At line 358 in file lab7.s
+   Uses
+      At line 353 in file lab7.s
+Comment: level_3 used once
+level_4 00000A7C
+
+Symbol: level_4
+   Definitions
+      At line 365 in file lab7.s
+   Uses
+      At line 360 in file lab7.s
+Comment: level_4 used once
+mother_already_exist 00000F5C
+
+Symbol: mother_already_exist
+   Definitions
+      At line 803 in file lab7.s
+   Uses
+      At line 751 in file lab7.s
+Comment: mother_already_exist used once
+negative_case 00000DAC
+
+Symbol: negative_case
+   Definitions
+      At line 648 in file lab7.s
+   Uses
+      At line 644 in file lab7.s
+Comment: negative_case used once
+nonames 00000F74
+
+Symbol: nonames
+   Definitions
+      At line 811 in file lab7.s
+   Uses
+      At line 808 in file lab7.s
+Comment: nonames used once
+not_1 000010A4
+
+Symbol: not_1
+   Definitions
+      At line 936 in file lab7.s
+   Uses
+      At line 932 in file lab7.s
+Comment: not_1 used once
+not_moving_left 0000100C
+
+Symbol: not_moving_left
+   Definitions
+      At line 869 in file lab7.s
+   Uses
+      At line 850 in file lab7.s
+Comment: not_moving_left used once
+not_moving_right 00001048
+
+Symbol: not_moving_right
+   Definitions
+      At line 890 in file lab7.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 8 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 871 in file lab7.s
+Comment: not_moving_right used once
+not_paused 00000B68
+
+Symbol: not_paused
+   Definitions
+      At line 453 in file lab7.s
+   Uses
+      At line 419 in file lab7.s
+      At line 425 in file lab7.s
+
+paused_loop 00000B0C
+
+Symbol: paused_loop
+   Definitions
+      At line 421 in file lab7.s
+   Uses
+      At line 451 in file lab7.s
+Comment: paused_loop used once
+prompt 00000000
+
+Symbol: prompt
+   Definitions
+      At line 127 in file lab7.s
+   Uses
+      At line 256 in file lab7.s
+Comment: prompt used once
+prompt0 0000037A
+
+Symbol: prompt0
+   Definitions
+      At line 130 in file lab7.s
+   Uses
+      None
+Comment: prompt0 unused
+prompt1 00000352
+
+Symbol: prompt1
+   Definitions
+      At line 129 in file lab7.s
+   Uses
+      At line 941 in file lab7.s
+Comment: prompt1 used once
+prompt_level 000005A6
+
+Symbol: prompt_level
+   Definitions
+      At line 132 in file lab7.s
+   Uses
+      At line 490 in file lab7.s
+Comment: prompt_level used once
+prompt_mothership 000005B0
+
+Symbol: prompt_mothership
+   Definitions
+      At line 133 in file lab7.s
+   Uses
+      At line 496 in file lab7.s
+Comment: prompt_mothership used once
+
+
+
+ARM Macro Assembler    Page 9 Alphabetic symbol ordering
+Relocatable symbols
+
+prompt_storage 000007C2
+
+Symbol: prompt_storage
+   Definitions
+      At line 141 in file lab7.s
+   Uses
+      At line 153 in file lab7.s
+Comment: prompt_storage used once
+prompt_timeleft 000005D4
+
+Symbol: prompt_timeleft
+   Definitions
+      At line 134 in file lab7.s
+   Uses
+      At line 506 in file lab7.s
+Comment: prompt_timeleft used once
+promptcopy 000001A9
+
+Symbol: promptcopy
+   Definitions
+      At line 128 in file lab7.s
+   Uses
+      At line 293 in file lab7.s
+Comment: promptcopy used once
+promptdir 000003FD
+
+Symbol: promptdir
+   Definitions
+      At line 131 in file lab7.s
+   Uses
+      At line 271 in file lab7.s
+Comment: promptdir used once
+promptend 000005E4
+
+Symbol: promptend
+   Definitions
+      At line 135 in file lab7.s
+   Uses
+      At line 1120 in file lab7.s
+      At line 1184 in file lab7.s
+
+promptend_level 0000076C
+
+Symbol: promptend_level
+   Definitions
+      At line 136 in file lab7.s
+   Uses
+      At line 1211 in file lab7.s
+      At line 1274 in file lab7.s
+
+promptend_leveldeathcount 00000790
+
+Symbol: promptend_leveldeathcount
+   Definitions
+      At line 138 in file lab7.s
+   Uses
+      At line 1233 in file lab7.s
+      At line 1307 in file lab7.s
+
+
+
+
+ARM Macro Assembler    Page 10 Alphabetic symbol ordering
+Relocatable symbols
+
+promptend_levelmothership 0000079F
+
+Symbol: promptend_levelmothership
+   Definitions
+      At line 139 in file lab7.s
+   Uses
+      At line 1240 in file lab7.s
+      At line 1317 in file lab7.s
+
+promptend_levelscore 00000787
+
+Symbol: promptend_levelscore
+   Definitions
+      At line 137 in file lab7.s
+   Uses
+      At line 1217 in file lab7.s
+      At line 1280 in file lab7.s
+
+promptend_leveltime 000007AD
+
+Symbol: promptend_leveltime
+   Definitions
+      At line 140 in file lab7.s
+   Uses
+      At line 1254 in file lab7.s
+      At line 1333 in file lab7.s
+
+regular_case 00000DB0
+
+Symbol: regular_case
+   Definitions
+      At line 650 in file lab7.s
+   Uses
+      At line 647 in file lab7.s
+Comment: regular_case used once
+skip_adding_second 00000D10
+
+Symbol: skip_adding_second
+   Definitions
+      At line 594 in file lab7.s
+   Uses
+      At line 556 in file lab7.s
+Comment: skip_adding_second used once
+skip_cuz_soft_timer 00000F98
+
+Symbol: skip_cuz_soft_timer
+   Definitions
+      At line 829 in file lab7.s
+   Uses
+      At line 725 in file lab7.s
+Comment: skip_cuz_soft_timer used once
+strobing_0 00000E64
+
+Symbol: strobing_0
+   Definitions
+      At line 715 in file lab7.s
+   Uses
+      At line 691 in file lab7.s
+Comment: strobing_0 used once
+
+
+
+ARM Macro Assembler    Page 11 Alphabetic symbol ordering
+Relocatable symbols
+
+strobing_1 00000E18
+
+Symbol: strobing_1
+   Definitions
+      At line 689 in file lab7.s
+   Uses
+      At line 663 in file lab7.s
+Comment: strobing_1 used once
+strobing_10 00000DC8
+
+Symbol: strobing_10
+   Definitions
+      At line 661 in file lab7.s
+   Uses
+      At line 629 in file lab7.s
+Comment: strobing_10 used once
+strobing_100 00000D68
+
+Symbol: strobing_100
+   Definitions
+      At line 627 in file lab7.s
+   Uses
+      At line 602 in file lab7.s
+Comment: strobing_100 used once
+update_map 00000BC0
+
+Symbol: update_map
+   Definitions
+      At line 484 in file lab7.s
+   Uses
+      At line 5 in file lab7.s
+      At line 827 in file lab7.s
+      At line 864 in file lab7.s
+      At line 886 in file lab7.s
+
+75 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Absolute symbols
+
+IO0CLR E002800C
+
+Symbol: IO0CLR
+   Definitions
+      At line 64 in file lab7.s
+   Uses
+      At line 444 in file lab7.s
+      At line 471 in file lab7.s
+      At line 609 in file lab7.s
+      At line 637 in file lab7.s
+      At line 671 in file lab7.s
+      At line 699 in file lab7.s
+      At line 739 in file lab7.s
+      At line 958 in file lab7.s
+
+IO0DIR E0028008
+
+Symbol: IO0DIR
+   Definitions
+      At line 65 in file lab7.s
+   Uses
+      At line 232 in file lab7.s
+      At line 606 in file lab7.s
+      At line 634 in file lab7.s
+      At line 668 in file lab7.s
+      At line 696 in file lab7.s
+
+IO0PIN E0028000
+
+Symbol: IO0PIN
+   Definitions
+      At line 63 in file lab7.s
+   Uses
+      None
+Comment: IO0PIN unused
+IO0SET E0028004
+
+Symbol: IO0SET
+   Definitions
+      At line 62 in file lab7.s
+   Uses
+      At line 447 in file lab7.s
+      At line 474 in file lab7.s
+      At line 623 in file lab7.s
+      At line 657 in file lab7.s
+      At line 685 in file lab7.s
+      At line 713 in file lab7.s
+      At line 742 in file lab7.s
+      At line 961 in file lab7.s
+
+IO1DIR E0028018
+
+Symbol: IO1DIR
+   Definitions
+      At line 76 in file lab7.s
+   Uses
+      At line 237 in file lab7.s
+Comment: IO1DIR used once
+IO1SET E0028014
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Absolute symbols
+
+
+Symbol: IO1SET
+   Definitions
+      At line 66 in file lab7.s
+   Uses
+      At line 955 in file lab7.s
+Comment: IO1SET used once
+LED_1_command 40007D00
+
+Symbol: LED_1_command
+   Definitions
+      At line 118 in file lab7.s
+   Uses
+      At line 169 in file lab7.s
+      At line 617 in file lab7.s
+      At line 651 in file lab7.s
+      At line 679 in file lab7.s
+      At line 707 in file lab7.s
+
+T0IR E0004000
+
+Symbol: T0IR
+   Definitions
+      At line 71 in file lab7.s
+   Uses
+      At line 521 in file lab7.s
+Comment: T0IR used once
+T0MCR E0004014
+
+Symbol: T0MCR
+   Definitions
+      At line 70 in file lab7.s
+   Uses
+      At line 330 in file lab7.s
+Comment: T0MCR used once
+T0MR0 E0004018
+
+Symbol: T0MR0
+   Definitions
+      At line 67 in file lab7.s
+   Uses
+      None
+Comment: T0MR0 unused
+T0MR1 E000401C
+
+Symbol: T0MR1
+   Definitions
+      At line 72 in file lab7.s
+   Uses
+      At line 340 in file lab7.s
+      At line 347 in file lab7.s
+      At line 354 in file lab7.s
+      At line 361 in file lab7.s
+      At line 366 in file lab7.s
+
+T0TC E0004008
+
+Symbol: T0TC
+   Definitions
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Absolute symbols
+
+      At line 69 in file lab7.s
+   Uses
+      At line 757 in file lab7.s
+Comment: T0TC used once
+T0TCR E0004004
+
+Symbol: T0TCR
+   Definitions
+      At line 68 in file lab7.s
+   Uses
+      At line 325 in file lab7.s
+      At line 433 in file lab7.s
+      At line 460 in file lab7.s
+
+T1IR E0008000
+
+Symbol: T1IR
+   Definitions
+      At line 73 in file lab7.s
+   Uses
+      At line 543 in file lab7.s
+Comment: T1IR used once
+T1MCR E0008014
+
+Symbol: T1MCR
+   Definitions
+      At line 78 in file lab7.s
+   Uses
+      At line 376 in file lab7.s
+Comment: T1MCR used once
+T1MR1 E000801C
+
+Symbol: T1MR1
+   Definitions
+      At line 79 in file lab7.s
+   Uses
+      At line 382 in file lab7.s
+Comment: T1MR1 used once
+T1TCR E0008004
+
+Symbol: T1TCR
+   Definitions
+      At line 75 in file lab7.s
+   Uses
+      At line 371 in file lab7.s
+      At line 438 in file lab7.s
+      At line 465 in file lab7.s
+
+U0TRR E000C000
+
+Symbol: U0TRR
+   Definitions
+      At line 74 in file lab7.s
+   Uses
+      At line 841 in file lab7.s
+Comment: U0TRR used once
+UART0 E000C004
+
+Symbol: UART0
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+Absolute symbols
+
+   Definitions
+      At line 77 in file lab7.s
+   Uses
+      At line 318 in file lab7.s
+      At line 428 in file lab7.s
+      At line 454 in file lab7.s
+
+current_keyboard_rng_input 40007994
+
+Symbol: current_keyboard_rng_input
+   Definitions
+      At line 91 in file lab7.s
+   Uses
+      At line 252 in file lab7.s
+      At line 764 in file lab7.s
+      At line 852 in file lab7.s
+      At line 873 in file lab7.s
+      At line 896 in file lab7.s
+
+current_level 40000200
+
+Symbol: current_level
+   Definitions
+      At line 87 in file lab7.s
+   Uses
+      At line 246 in file lab7.s
+      At line 335 in file lab7.s
+      At line 493 in file lab7.s
+      At line 1277 in file lab7.s
+
+current_score_1 40006900
+
+Symbol: current_score_1
+   Definitions
+      At line 93 in file lab7.s
+   Uses
+      At line 277 in file lab7.s
+      At line 703 in file lab7.s
+      At line 1030 in file lab7.s
+      At line 1301 in file lab7.s
+
+current_score_10 40006904
+
+Symbol: current_score_10
+   Definitions
+      At line 94 in file lab7.s
+   Uses
+      At line 280 in file lab7.s
+      At line 675 in file lab7.s
+      At line 1002 in file lab7.s
+      At line 1295 in file lab7.s
+
+current_score_100 40006908
+
+Symbol: current_score_100
+   Definitions
+      At line 95 in file lab7.s
+   Uses
+      At line 282 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 5 Alphabetic symbol ordering
+Absolute symbols
+
+      At line 641 in file lab7.s
+      At line 982 in file lab7.s
+      At line 1289 in file lab7.s
+
+current_score_1000 4000690C
+
+Symbol: current_score_1000
+   Definitions
+      At line 96 in file lab7.s
+   Uses
+      At line 284 in file lab7.s
+      At line 613 in file lab7.s
+      At line 972 in file lab7.s
+      At line 1283 in file lab7.s
+
+endpoint_location 40006940
+
+Symbol: endpoint_location
+   Definitions
+      At line 112 in file lab7.s
+   Uses
+      At line 264 in file lab7.s
+      At line 528 in file lab7.s
+
+enemy_proj_offset 400074A0
+
+Symbol: enemy_proj_offset
+   Definitions
+      At line 60 in file lab7.s
+   Uses
+      None
+Comment: enemy_proj_offset unused
+enemy_proj_on_board 400074B0
+
+Symbol: enemy_proj_on_board
+   Definitions
+      At line 61 in file lab7.s
+   Uses
+      At line 815 in file lab7.s
+Comment: enemy_proj_on_board used once
+enemyoffset 40007120
+
+Symbol: enemyoffset
+   Definitions
+      At line 59 in file lab7.s
+   Uses
+      None
+Comment: enemyoffset unused
+keystork_rng_counter 40007990
+
+Symbol: keystork_rng_counter
+   Definitions
+      At line 90 in file lab7.s
+   Uses
+      At line 250 in file lab7.s
+      At line 761 in file lab7.s
+      At line 844 in file lab7.s
+
+left_right_dir_flag 40007290
+
+
+
+ARM Macro Assembler    Page 6 Alphabetic symbol ordering
+Absolute symbols
+
+
+Symbol: left_right_dir_flag
+   Definitions
+      At line 84 in file lab7.s
+   Uses
+      None
+Comment: left_right_dir_flag unused
+lives 40005000
+
+Symbol: lives
+   Definitions
+      At line 57 in file lab7.s
+   Uses
+      At line 241 in file lab7.s
+      At line 1311 in file lab7.s
+
+mothership_appears_count 40007E28
+
+Symbol: mothership_appears_count
+   Definitions
+      At line 124 in file lab7.s
+   Uses
+      At line 287 in file lab7.s
+      At line 767 in file lab7.s
+      At line 788 in file lab7.s
+      At line 1328 in file lab7.s
+
+mothership_appears_hit 40007E2C
+
+Symbol: mothership_appears_hit
+   Definitions
+      At line 125 in file lab7.s
+   Uses
+      At line 289 in file lab7.s
+      At line 1320 in file lab7.s
+
+mothership_exist_on_board 400078A0
+
+Symbol: mothership_exist_on_board
+   Definitions
+      At line 113 in file lab7.s
+   Uses
+      At line 748 in file lab7.s
+Comment: mothership_exist_on_board used once
+mothership_left_or_right_dir 40007860
+
+Symbol: mothership_left_or_right_dir
+   Definitions
+      At line 114 in file lab7.s
+   Uses
+      At line 805 in file lab7.s
+Comment: mothership_left_or_right_dir used once
+mothership_score_1 40006930
+
+Symbol: mothership_score_1
+   Definitions
+      At line 103 in file lab7.s
+   Uses
+      At line 222 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 7 Alphabetic symbol ordering
+Absolute symbols
+
+      At line 503 in file lab7.s
+
+mothership_score_10 40006934
+
+Symbol: mothership_score_10
+   Definitions
+      At line 104 in file lab7.s
+   Uses
+      At line 224 in file lab7.s
+      At line 501 in file lab7.s
+
+mothership_score_100 40006938
+
+Symbol: mothership_score_100
+   Definitions
+      At line 105 in file lab7.s
+   Uses
+      At line 226 in file lab7.s
+      At line 499 in file lab7.s
+
+paused_game_flag 40005010
+
+Symbol: paused_game_flag
+   Definitions
+      At line 88 in file lab7.s
+   Uses
+      At line 267 in file lab7.s
+      At line 416 in file lab7.s
+      At line 422 in file lab7.s
+      At line 929 in file lab7.s
+
+previous_led_display 40000100
+
+Symbol: previous_led_display
+   Definitions
+      At line 82 in file lab7.s
+   Uses
+      None
+Comment: previous_led_display unused
+proj_exist_on_board_flag 40007410
+
+Symbol: proj_exist_on_board_flag
+   Definitions
+      At line 85 in file lab7.s
+   Uses
+      At line 731 in file lab7.s
+      At line 898 in file lab7.s
+
+prompt_storage_offset 40007E20
+
+Symbol: prompt_storage_offset
+   Definitions
+      At line 121 in file lab7.s
+   Uses
+      At line 154 in file lab7.s
+      At line 1191 in file lab7.s
+
+prompt_storage_offset_copy 40007E24
+
+
+
+
+ARM Macro Assembler    Page 8 Alphabetic symbol ordering
+Absolute symbols
+
+Symbol: prompt_storage_offset_copy
+   Definitions
+      At line 122 in file lab7.s
+   Uses
+      At line 156 in file lab7.s
+      At line 1201 in file lab7.s
+
+promptend_offset 40007A00
+
+Symbol: promptend_offset
+   Definitions
+      At line 116 in file lab7.s
+   Uses
+      At line 1121 in file lab7.s
+Comment: promptend_offset used once
+promptoffset 40007100
+
+Symbol: promptoffset
+   Definitions
+      At line 83 in file lab7.s
+   Uses
+      At line 257 in file lab7.s
+      At line 260 in file lab7.s
+      At line 294 in file lab7.s
+      At line 486 in file lab7.s
+      At line 857 in file lab7.s
+      At line 878 in file lab7.s
+
+right_enemycounts 40007370
+
+Symbol: right_enemycounts
+   Definitions
+      At line 58 in file lab7.s
+   Uses
+      None
+Comment: right_enemycounts unused
+score_location_1 40007A10
+
+Symbol: score_location_1
+   Definitions
+      At line 48 in file lab7.s
+   Uses
+      At line 1124 in file lab7.s
+Comment: score_location_1 used once
+score_location_2 40007A18
+
+Symbol: score_location_2
+   Definitions
+      At line 49 in file lab7.s
+   Uses
+      At line 1133 in file lab7.s
+Comment: score_location_2 used once
+score_location_3 40007A20
+
+Symbol: score_location_3
+   Definitions
+      At line 50 in file lab7.s
+   Uses
+      At line 1142 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 9 Alphabetic symbol ordering
+Absolute symbols
+
+Comment: score_location_3 used once
+score_location_4 40007A28
+
+Symbol: score_location_4
+   Definitions
+      At line 51 in file lab7.s
+   Uses
+      At line 1151 in file lab7.s
+Comment: score_location_4 used once
+seconds_increment_counter 40007AA0
+
+Symbol: seconds_increment_counter
+   Definitions
+      At line 119 in file lab7.s
+   Uses
+      At line 229 in file lab7.s
+      At line 550 in file lab7.s
+      At line 558 in file lab7.s
+
+ship_location 40006000
+
+Symbol: ship_location
+   Definitions
+      At line 86 in file lab7.s
+   Uses
+      At line 855 in file lab7.s
+      At line 876 in file lab7.s
+
+strobing_flag 40005040
+
+Symbol: strobing_flag
+   Definitions
+      At line 80 in file lab7.s
+   Uses
+      At line 205 in file lab7.s
+      At line 598 in file lab7.s
+
+time_left_1 40006944
+
+Symbol: time_left_1
+   Definitions
+      At line 107 in file lab7.s
+   Uses
+      At line 159 in file lab7.s
+      At line 512 in file lab7.s
+      At line 571 in file lab7.s
+      At line 1180 in file lab7.s
+      At line 1342 in file lab7.s
+
+time_left_10 40006948
+
+Symbol: time_left_10
+   Definitions
+      At line 108 in file lab7.s
+   Uses
+      At line 163 in file lab7.s
+      At line 510 in file lab7.s
+      At line 578 in file lab7.s
+      At line 1172 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 10 Alphabetic symbol ordering
+Absolute symbols
+
+      At line 1339 in file lab7.s
+
+time_left_100 4000694C
+
+Symbol: time_left_100
+   Definitions
+      At line 109 in file lab7.s
+   Uses
+      At line 165 in file lab7.s
+      At line 508 in file lab7.s
+      At line 584 in file lab7.s
+      At line 1164 in file lab7.s
+      At line 1336 in file lab7.s
+
+time_left_total 40006954
+
+Symbol: time_left_total
+   Definitions
+      At line 110 in file lab7.s
+   Uses
+      At line 149 in file lab7.s
+      At line 564 in file lab7.s
+
+time_location_1 40007A30
+
+Symbol: time_location_1
+   Definitions
+      At line 52 in file lab7.s
+   Uses
+      At line 1160 in file lab7.s
+Comment: time_location_1 used once
+time_location_2 40007A38
+
+Symbol: time_location_2
+   Definitions
+      At line 53 in file lab7.s
+   Uses
+      At line 1168 in file lab7.s
+Comment: time_location_2 used once
+time_location_3 40007A40
+
+Symbol: time_location_3
+   Definitions
+      At line 54 in file lab7.s
+   Uses
+      At line 1176 in file lab7.s
+Comment: time_location_3 used once
+timer_counter 40007B00
+
+Symbol: timer_counter
+   Definitions
+      At line 115 in file lab7.s
+   Uses
+      At line 209 in file lab7.s
+      At line 718 in file lab7.s
+      At line 727 in file lab7.s
+
+total_score_1 40006920
+
+
+
+
+ARM Macro Assembler    Page 11 Alphabetic symbol ordering
+Absolute symbols
+
+Symbol: total_score_1
+   Definitions
+      At line 98 in file lab7.s
+   Uses
+      At line 213 in file lab7.s
+      At line 1032 in file lab7.s
+      At line 1155 in file lab7.s
+
+total_score_10 40006924
+
+Symbol: total_score_10
+   Definitions
+      At line 99 in file lab7.s
+   Uses
+      At line 215 in file lab7.s
+      At line 1004 in file lab7.s
+      At line 1039 in file lab7.s
+      At line 1146 in file lab7.s
+
+total_score_100 40006928
+
+Symbol: total_score_100
+   Definitions
+      At line 100 in file lab7.s
+   Uses
+      At line 217 in file lab7.s
+      At line 984 in file lab7.s
+      At line 1011 in file lab7.s
+      At line 1045 in file lab7.s
+      At line 1137 in file lab7.s
+
+total_score_1000 4000692C
+
+Symbol: total_score_1000
+   Definitions
+      At line 101 in file lab7.s
+   Uses
+      At line 219 in file lab7.s
+      At line 974 in file lab7.s
+      At line 991 in file lab7.s
+      At line 1017 in file lab7.s
+      At line 1051 in file lab7.s
+      At line 1128 in file lab7.s
+
+66 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+External symbols
+
+eject_enemy_proj 00000000
+
+Symbol: eject_enemy_proj
+   Definitions
+      At line 36 in file lab7.s
+   Uses
+      At line 822 in file lab7.s
+Comment: eject_enemy_proj used once
+eject_proj 00000000
+
+Symbol: eject_proj
+   Definitions
+      At line 32 in file lab7.s
+   Uses
+      At line 903 in file lab7.s
+Comment: eject_proj used once
+enemy_eject_proj 00000000
+
+Symbol: enemy_eject_proj
+   Definitions
+      At line 34 in file lab7.s
+   Uses
+      None
+Comment: enemy_eject_proj unused
+enemy_motion 00000000
+
+Symbol: enemy_motion
+   Definitions
+      At line 9 in file lab7.s
+   Uses
+      At line 537 in file lab7.s
+Comment: enemy_motion used once
+enemy_motioning_left 00000000
+
+Symbol: enemy_motioning_left
+   Definitions
+      At line 29 in file lab7.s
+   Uses
+      None
+Comment: enemy_motioning_left unused
+enemy_motioning_right 00000000
+
+Symbol: enemy_motioning_right
+   Definitions
+      At line 28 in file lab7.s
+   Uses
+      None
+Comment: enemy_motioning_right unused
+enemy_proj_motion 00000000
+
+Symbol: enemy_proj_motion
+   Definitions
+      At line 38 in file lab7.s
+   Uses
+      At line 825 in file lab7.s
+Comment: enemy_proj_motion used once
+enemy_proj_setups 00000000
+
+Symbol: enemy_proj_setups
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+External symbols
+
+   Definitions
+      At line 37 in file lab7.s
+   Uses
+      At line 309 in file lab7.s
+Comment: enemy_proj_setups used once
+enemy_setups 00000000
+
+Symbol: enemy_setups
+   Definitions
+      At line 27 in file lab7.s
+   Uses
+      At line 307 in file lab7.s
+Comment: enemy_setups used once
+interrupt_init 00000000
+
+Symbol: interrupt_init
+   Definitions
+      At line 10 in file lab7.s
+   Uses
+      None
+Comment: interrupt_init unused
+lights_up_1000_LED 00000000
+
+Symbol: lights_up_1000_LED
+   Definitions
+      At line 17 in file lab7.s
+   Uses
+      None
+Comment: lights_up_1000_LED unused
+lights_up_100_LED 00000000
+
+Symbol: lights_up_100_LED
+   Definitions
+      At line 18 in file lab7.s
+   Uses
+      None
+Comment: lights_up_100_LED unused
+lights_up_10_LED 00000000
+
+Symbol: lights_up_10_LED
+   Definitions
+      At line 19 in file lab7.s
+   Uses
+      None
+Comment: lights_up_10_LED unused
+lights_up_1_LED 00000000
+
+Symbol: lights_up_1_LED
+   Definitions
+      At line 20 in file lab7.s
+   Uses
+      None
+Comment: lights_up_1_LED unused
+mothership_left_move 00000000
+
+Symbol: mothership_left_move
+   Definitions
+      At line 45 in file lab7.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+External symbols
+
+      At line 809 in file lab7.s
+Comment: mothership_left_move used once
+mothership_right_move 00000000
+
+Symbol: mothership_right_move
+   Definitions
+      At line 44 in file lab7.s
+   Uses
+      At line 812 in file lab7.s
+Comment: mothership_right_move used once
+mothership_setup 00000000
+
+Symbol: mothership_setup
+   Definitions
+      At line 41 in file lab7.s
+   Uses
+      At line 310 in file lab7.s
+Comment: mothership_setup used once
+mothership_starting_showup_left 00000000
+
+Symbol: mothership_starting_showup_left
+   Definitions
+      At line 42 in file lab7.s
+   Uses
+      At line 797 in file lab7.s
+Comment: mothership_starting_showup_left used once
+mothership_starting_showup_right 00000000
+
+Symbol: mothership_starting_showup_right
+   Definitions
+      At line 43 in file lab7.s
+   Uses
+      At line 800 in file lab7.s
+Comment: mothership_starting_showup_right used once
+newline 00000000
+
+Symbol: newline
+   Definitions
+      At line 14 in file lab7.s
+   Uses
+      At line 940 in file lab7.s
+Comment: newline used once
+output_character 00000000
+
+Symbol: output_character
+   Definitions
+      At line 46 in file lab7.s
+   Uses
+      At line 1215 in file lab7.s
+      At line 1222 in file lab7.s
+      At line 1225 in file lab7.s
+      At line 1228 in file lab7.s
+      At line 1231 in file lab7.s
+      At line 1238 in file lab7.s
+      At line 1245 in file lab7.s
+      At line 1248 in file lab7.s
+      At line 1252 in file lab7.s
+      At line 1259 in file lab7.s
+      At line 1264 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+External symbols
+
+      At line 1268 in file lab7.s
+      At line 1315 in file lab7.s
+      At line 1323 in file lab7.s
+      At line 1326 in file lab7.s
+      At line 1331 in file lab7.s
+      At line 1338 in file lab7.s
+      At line 1341 in file lab7.s
+      At line 1344 in file lab7.s
+
+output_string 00000000
+
+Symbol: output_string
+   Definitions
+      At line 12 in file lab7.s
+   Uses
+      At line 272 in file lab7.s
+      At line 488 in file lab7.s
+      At line 491 in file lab7.s
+      At line 494 in file lab7.s
+      At line 497 in file lab7.s
+      At line 500 in file lab7.s
+      At line 502 in file lab7.s
+      At line 504 in file lab7.s
+      At line 507 in file lab7.s
+      At line 509 in file lab7.s
+      At line 511 in file lab7.s
+      At line 513 in file lab7.s
+      At line 942 in file lab7.s
+      At line 1185 in file lab7.s
+      At line 1212 in file lab7.s
+      At line 1218 in file lab7.s
+      At line 1234 in file lab7.s
+      At line 1241 in file lab7.s
+      At line 1255 in file lab7.s
+      At line 1275 in file lab7.s
+      At line 1278 in file lab7.s
+      At line 1281 in file lab7.s
+      At line 1287 in file lab7.s
+      At line 1293 in file lab7.s
+      At line 1299 in file lab7.s
+      At line 1305 in file lab7.s
+      At line 1308 in file lab7.s
+      At line 1318 in file lab7.s
+      At line 1334 in file lab7.s
+
+proj_motion 00000000
+
+Symbol: proj_motion
+   Definitions
+      At line 33 in file lab7.s
+   Uses
+      At line 745 in file lab7.s
+Comment: proj_motion used once
+proj_setups 00000000
+
+Symbol: proj_setups
+   Definitions
+      At line 31 in file lab7.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 5 Alphabetic symbol ordering
+External symbols
+
+      At line 308 in file lab7.s
+Comment: proj_setups used once
+read_character 00000000
+
+Symbol: read_character
+   Definitions
+      At line 13 in file lab7.s
+   Uses
+      None
+Comment: read_character unused
+read_string 00000000
+
+Symbol: read_string
+   Definitions
+      At line 15 in file lab7.s
+   Uses
+      None
+Comment: read_string unused
+rng 00000000
+
+Symbol: rng
+   Definitions
+      At line 21 in file lab7.s
+   Uses
+      At line 794 in file lab7.s
+Comment: rng used once
+seven_seg 00000000
+
+Symbol: seven_seg
+   Definitions
+      At line 16 in file lab7.s
+   Uses
+      None
+Comment: seven_seg unused
+ship_setups 00000000
+
+Symbol: ship_setups
+   Definitions
+      At line 23 in file lab7.s
+   Uses
+      At line 306 in file lab7.s
+Comment: ship_setups used once
+ship_shift_left 00000000
+
+Symbol: ship_shift_left
+   Definitions
+      At line 24 in file lab7.s
+   Uses
+      At line 863 in file lab7.s
+Comment: ship_shift_left used once
+ship_shift_right 00000000
+
+Symbol: ship_shift_right
+   Definitions
+      At line 25 in file lab7.s
+   Uses
+      At line 885 in file lab7.s
+Comment: ship_shift_right used once
+uart_init 00000000
+
+
+
+ARM Macro Assembler    Page 6 Alphabetic symbol ordering
+External symbols
+
+
+Symbol: uart_init
+   Definitions
+      At line 11 in file lab7.s
+   Uses
+      At line 147 in file lab7.s
+Comment: uart_init used once
+32 symbols
+507 symbols in table
